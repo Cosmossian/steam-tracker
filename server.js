@@ -13,7 +13,11 @@ const DB_NAME = "steamtracker";
 let db;
 
 async function connectMongo() {
-  const client = new MongoClient(MONGO_URL);
+  const client = new MongoClient(MONGO_URL, {
+    tls: true,
+    tlsAllowInvalidCertificates: false,
+    serverSelectionTimeoutMS: 5000,
+  });
   await client.connect();
   db = client.db(DB_NAME);
   console.log("✅ Connected to MongoDB");
