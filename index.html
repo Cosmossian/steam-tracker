@@ -291,6 +291,22 @@
   .lets-play-btn:hover { opacity: .85; }
   .game-search-empty { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
 
+  /* Ideas selected tray */
+  .ideas-tray { background: var(--card); border: 1px solid var(--border-bright); border-radius: 10px; padding: 16px 20px; margin-top: 16px; }
+  .ideas-tray-label { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+  .ideas-tray-games { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .ideas-tray-game { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 6px 10px; font-size: 12px; color: var(--text); }
+  .ideas-tray-game img { width: 48px; height: 22px; object-fit: cover; border-radius: 2px; background: var(--border); flex-shrink: 0; }
+  .ideas-tray-game .tray-name { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+  .ideas-tray-game .tray-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; transition: color .15s; }
+  .ideas-tray-game .tray-remove:hover { color: #e05a4d; }
+  .ideas-roll-btn { background: linear-gradient(135deg, #1b6eb5, var(--accent)); border: none; border-radius: var(--radius); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; padding: 12px 28px; cursor: pointer; text-transform: uppercase; transition: opacity .2s, box-shadow .2s; box-shadow: 0 0 20px rgba(77,157,224,0.2); width: 100%; }
+  .ideas-roll-btn:hover { opacity: .9; box-shadow: 0 0 30px rgba(77,157,224,0.4); }
+  .ideas-roll-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .add-idea-btn { background: rgba(77,157,224,0.1); border: 1px solid var(--accent); border-radius: var(--radius); color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 7px 12px; cursor: pointer; text-transform: uppercase; transition: all .2s; white-space: nowrap; }
+  .add-idea-btn:hover { background: rgba(77,157,224,0.2); }
+  .add-idea-btn.added { background: rgba(77,224,138,0.1); border-color: var(--green); color: var(--green); }
+
   /* ROLL PAGE */
   #page-roll { overflow: hidden; }
   .roll-stage { display: flex; flex-direction: column; align-items: center; gap: 20px; }
@@ -557,6 +573,12 @@
             <div class="game-search-empty">Start typing to search across all players' libraries</div>
           </div>
         </div>
+        <!-- selected games tray -->
+        <div class="ideas-tray" id="ideas-tray" style="display:none">
+          <div class="ideas-tray-label">Selected Games — <span id="ideas-tray-count">0</span> picked</div>
+          <div class="ideas-tray-games" id="ideas-tray-games"></div>
+          <button class="ideas-roll-btn" id="ideas-roll-btn" onclick="startIdeasRoll()">🎲 Roll Between These</button>
+        </div>
         <div style="padding-bottom:40px"></div>
       </div>
 
@@ -601,7 +623,8 @@ let filteredAppIds = [];
 let rolledGame = null;
 let scanStartTime = 0;
 let pickerMode = 'random';         // 'random' | 'ideas'
-let allUsersGames = {};            // { steamId: [games array] } — all games across all selected users
+let allUsersGames = {};            // { steamId: [games array] }
+let ideasSelectedGames = [];       // games selected in ideas mode
 
 // ── NAV ────────────────────────────────────────────────────────────────────
 function showPage(id) {
@@ -732,6 +755,7 @@ async function findGroupGames() {
   groupData = null;
   pickerMode = 'random';
   allUsersGames = {};
+  ideasSelectedGames = [];
 
   // Reset picker mode UI
   document.getElementById('pmb-random').classList.add('active');
@@ -740,10 +764,16 @@ async function findGroupGames() {
   document.getElementById('panel-ideas').style.display = 'none';
 
   document.getElementById('gp-shared-count').textContent = '…';
-  document.getElementById('gp-members').innerHTML = selectedGroupIds.map(sid => {
-    const u = groupUsers.find(u => u.steamId === sid);
-    return `<span class="gp-member-pill">${esc(u?.displayName||sid)}</span>`;
-  }).join('');
+  document.getElementById('gp-members').innerHTML = selectedGroupIds
+    .slice().sort((a, b) => {
+      const ua = groupUsers.find(u => u.steamId === a);
+      const ub = groupUsers.find(u => u.steamId === b);
+      return (ua?.displayName || a).localeCompare(ub?.displayName || b);
+    })
+    .map(sid => {
+      const u = groupUsers.find(u => u.steamId === sid);
+      return `<span class="gp-member-pill">${esc(u?.displayName||sid)}</span>`;
+    }).join('');
   document.getElementById('scan-progress-wrap').style.display = '';
   document.getElementById('tag-content').style.display = 'none';
   document.getElementById('roll-btn').disabled = true;
@@ -905,9 +935,7 @@ function renderGameResults(query) {
 
   const q = query.toLowerCase();
 
-  // Build a combined game map across ALL users' libraries
-  // allUsersGames is { steamId: [games] } populated during findGroupGames
-  const gameMap = {}; // appid -> { name, owners: Set of steamIds }
+  const gameMap = {};
   for (const [sid, games] of Object.entries(allUsersGames)) {
     for (const g of games) {
       if (!gameMap[g.appid]) gameMap[g.appid] = { appid: g.appid, name: g.name, owners: new Set() };
@@ -918,7 +946,6 @@ function renderGameResults(query) {
   const matches = Object.values(gameMap)
     .filter(g => g.name.toLowerCase().includes(q))
     .sort((a, b) => {
-      // sort: all-own first, then by name
       const aAll = selectedGroupIds.every(id => a.owners.has(id));
       const bAll = selectedGroupIds.every(id => b.owners.has(id));
       if (aAll && !bAll) return -1;
@@ -934,15 +961,15 @@ function renderGameResults(query) {
 
   container.innerHTML = matches.map(g => {
     const allOwn = selectedGroupIds.every(id => g.owners.has(id));
+    const isSelected = ideasSelectedGames.some(s => s.appid === g.appid);
     const ownerBadges = selectedGroupIds.map(sid => {
       const owns = g.owners.has(sid);
       const u = groupUsers.find(u => u.steamId === sid);
-      const name = u?.displayName || sid;
-      return `<span class="owner-badge ${owns ? 'owns' : 'missing'}">${owns ? '✓' : '✗'} ${esc(name)}</span>`;
+      return `<span class="owner-badge ${owns ? 'owns' : 'missing'}">${owns ? '✓' : '✗'} ${esc(u?.displayName || sid)}</span>`;
     }).join('');
 
     const actionBtn = allOwn
-      ? `<button class="lets-play-btn" onclick="letsPlayThis(${g.appid})">Let's Play →</button>`
+      ? `<button class="add-idea-btn ${isSelected ? 'added' : ''}" onclick="toggleIdeasGame(${g.appid}, '${esc(g.name)}')">${isSelected ? '✓ Added' : '+ Add'}</button>`
       : `<span style="font-size:10px;color:var(--muted);font-family:'Orbitron',sans-serif;letter-spacing:1px">Not shared</span>`;
 
     return `
@@ -957,8 +984,82 @@ function renderGameResults(query) {
   }).join('');
 }
 
+function toggleIdeasGame(appId, name) {
+  const idx = ideasSelectedGames.findIndex(g => g.appid === appId);
+  if (idx >= 0) {
+    ideasSelectedGames.splice(idx, 1);
+  } else {
+    ideasSelectedGames.push({ appid: appId, name });
+  }
+  renderIdeasTray();
+  // re-render search results to update button states
+  const q = document.getElementById('game-search-input')?.value.trim() || '';
+  if (q) renderGameResults(q);
+}
+
+function renderIdeasTray() {
+  const tray = document.getElementById('ideas-tray');
+  const trayGames = document.getElementById('ideas-tray-games');
+  const trayCount = document.getElementById('ideas-tray-count');
+
+  if (!ideasSelectedGames.length) {
+    tray.style.display = 'none';
+    return;
+  }
+  tray.style.display = '';
+  trayCount.textContent = ideasSelectedGames.length;
+  trayGames.innerHTML = ideasSelectedGames.map(g => `
+    <div class="ideas-tray-game">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0" />
+      <span class="tray-name">${esc(g.name)}</span>
+      <button class="tray-remove" onclick="toggleIdeasGame(${g.appid}, '${esc(g.name)}')">×</button>
+    </div>`).join('');
+}
+
+async function startIdeasRoll() {
+  if (!ideasSelectedGames.length) return;
+  // If only one game selected, go straight to result
+  if (ideasSelectedGames.length === 1) {
+    await letsPlayThis(ideasSelectedGames[0].appid);
+    return;
+  }
+  // Multiple — do the slot animation between selected games
+  showPage('page-roll');
+  document.getElementById('roll-label').textContent = `Rolling between ${ideasSelectedGames.length} games…`;
+  document.getElementById('roll-sublabel').textContent = '';
+  document.getElementById('roll-progress-wrap').style.display = 'none';
+
+  const winnerId = ideasSelectedGames[Math.floor(Math.random() * ideasSelectedGames.length)].appid;
+  const winnerGame = groupData?.sharedGames?.find(g => g.appid === winnerId) || ideasSelectedGames.find(g => g.appid === winnerId);
+
+  const spinList = [];
+  for (let i = 0; i < 30; i++) spinList.push(ideasSelectedGames[i % ideasSelectedGames.length]);
+  spinList.push({ appid: winnerId, name: winnerGame.name });
+
+  const track = document.getElementById('slot-track');
+  track.style.transition = 'none';
+  track.style.transform = 'translateY(0)';
+  track.innerHTML = spinList.map(g => `
+    <div class="slot-item">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0"/>
+      <div class="sname">${esc(g.name)}</div>
+    </div>`).join('');
+
+  const itemH = 80;
+  const targetY = -(spinList.length - 1) * itemH + (240 / 2 - itemH / 2);
+  await sleep(200);
+  track.style.transition = 'transform 3.2s cubic-bezier(0.23, 1, 0.32, 1)';
+  track.style.transform = `translateY(${targetY}px)`;
+  await sleep(3400);
+  document.getElementById('roll-sublabel').textContent = winnerGame.name;
+
+  filteredAppIds = ideasSelectedGames.map(g => g.appid);
+  rolledGame = groupData?.sharedGames?.find(g => g.appid === winnerId) || winnerGame;
+  await sleep(600);
+  await showResult(rolledGame);
+}
+
 async function letsPlayThis(appId) {
-  // Find the game in the shared list, go straight to result
   const game = groupData?.sharedGames?.find(g => g.appid === appId);
   if (!game) return;
   rolledGame = game;
@@ -1060,7 +1161,13 @@ async function showResult(game) {
     const details = await (await fetch(`/api/group/gamedetails?appid=${game.appid}&steamids=${ids}`)).json();
     const genres = details.genres || [], tags = details.tags || [], categories = details.categories || [];
 
-    const userCardsHTML = selectedGroupIds.map(sid => {
+    const userCardsHTML = selectedGroupIds
+      .slice().sort((a, b) => {
+        const ua = groupUsers.find(u => u.steamId === a);
+        const ub = groupUsers.find(u => u.steamId === b);
+        return (ua?.displayName || a).localeCompare(ub?.displayName || b);
+      })
+      .map(sid => {
       const u = groupUsers.find(u => u.steamId === sid);
       const displayName = u?.displayName || sid;
       const pg = game.perUser?.find(p => p.steamId === sid) || {};
@@ -1098,7 +1205,7 @@ async function showResult(game) {
       </div>
       <div class="gp-section-label" style="text-align:left;margin-bottom:14px">Player Stats</div>
       <div class="result-user-grid">${userCardsHTML}</div>
-      <div style="text-align:center"><button class="reroll-btn" onclick="startRoll()">🎲 Re-roll</button></div>`;
+      <div style="text-align:center"><button class="reroll-btn" onclick="pickerMode==='ideas' ? startIdeasRoll() : startRoll()">🎲 Re-roll</button></div>`;
 
     requestAnimationFrame(() => {
       wrap.querySelectorAll('.ruc-fill').forEach(el => {
