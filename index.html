@@ -35,6 +35,31 @@
   .global-nav .nav-btn:hover { color: var(--text); border-color: var(--accent); }
   .global-nav .nav-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
   .global-nav .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .global-nav .nav-account-btn { background: none; border: 1px solid var(--border-bright); color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; padding: 5px 14px; border-radius: var(--radius); cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .global-nav .nav-account-btn:hover { background: var(--accent-glow); border-color: var(--accent); }
+  .global-nav .nav-username { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; color: var(--accent); }
+  .global-nav .nav-logout-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 11px; padding: 4px 10px; border-radius: var(--radius); cursor: pointer; transition: all .2s; }
+  .global-nav .nav-logout-btn:hover { color: #e05a4d; border-color: #e05a4d; }
+
+  /* AUTH MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .auth-modal { background: var(--surface); border: 1px solid var(--border-bright); border-radius: 14px; padding: 40px 44px; width: 400px; max-width: 95vw; animation: fadeDown .25s ease both; }
+  .auth-modal h2 { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 2px; margin-bottom: 6px; }
+  .auth-modal .auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+  .auth-modal .auth-tabs { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .auth-modal .auth-tab { flex: 1; padding: 9px; background: none; border: none; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; color: var(--muted); transition: all .15s; text-transform: uppercase; }
+  .auth-modal .auth-tab.active { background: var(--accent-glow); color: var(--accent); }
+  .auth-modal .auth-tab:first-child { border-right: 1px solid var(--border); }
+  .auth-field { margin-bottom: 16px; }
+  .auth-field label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; font-family: 'Orbitron', sans-serif; }
+  .auth-field input { width: 100%; background: var(--card); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 11px 14px; color: #fff; font-family: 'Exo 2', sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
+  .auth-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .auth-submit-btn { width: 100%; background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; padding: 13px; cursor: pointer; text-transform: uppercase; transition: background .2s; margin-top: 8px; }
+  .auth-submit-btn:hover { background: #5daff0; }
+  .auth-error { font-size: 12px; color: #e05a4d; margin-top: 10px; min-height: 18px; text-align: center; }
+  .auth-guest-btn { width: 100%; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 13px; padding: 10px; border-radius: var(--radius); cursor: pointer; margin-top: 10px; transition: all .2s; }
+  .auth-guest-btn:hover { color: var(--text); border-color: var(--muted); }
   .global-nav .nav-user-pill { background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 3px 12px; font-size: 11px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--accent); display: none; }
   .global-nav .nav-games-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 10px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); display: none; }
 
@@ -365,8 +390,36 @@
     <span class="nav-user-pill" id="nav-user-pill"></span>
     <span class="nav-games-pill" id="nav-games-pill"></span>
     <button class="nav-btn" id="nav-change-user" onclick="goBack('page-steamid')" style="display:none">Change User</button>
+    <!-- auth: shown when not logged in -->
+    <button class="nav-account-btn" id="nav-login-btn" onclick="openAuthModal('login')" style="display:none">Login / Register</button>
+    <!-- auth: shown when logged in -->
+    <span class="nav-username" id="nav-username" style="display:none"></span>
+    <button class="nav-logout-btn" id="nav-logout-btn" onclick="logout()" style="display:none">Logout</button>
   </div>
 </nav>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal-overlay" onclick="closeAuthModal(event)">
+  <div class="auth-modal" onclick="event.stopPropagation()">
+    <h2>Steam Tracker</h2>
+    <div class="auth-sub">Save your Steam accounts and access them from anywhere.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
+    <div class="auth-field">
+      <label>Username</label>
+      <input type="text" id="auth-username" placeholder="e.g. Cosmossian" maxlength="30" autocomplete="username" />
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-submit-btn" id="auth-submit-btn" onclick="submitAuth()">Login</button>
+    <button class="auth-guest-btn" onclick="closeAuthModal()">Continue as Guest</button>
+  </div>
+</div>
 
 <!-- LANDING -->
 <div class="page" id="page-landing">
@@ -623,9 +676,93 @@ let matchMode = 'all';
 let filteredAppIds = [];
 let rolledGame = null;
 let scanStartTime = 0;
-let pickerMode = 'random';         // 'random' | 'ideas'
-let allUsersGames = {};            // { steamId: [games array] }
-let ideasSelectedGames = [];       // games selected in ideas mode
+let pickerMode = 'random';
+let allUsersGames = {};
+let ideasSelectedGames = [];
+let currentAccount = null; // { username, displayUsername } or null if guest
+
+// ── AUTH ────────────────────────────────────────────────────────────────────
+async function initAuth() {
+  try {
+    const res = await fetch('/api/auth/me');
+    const data = await res.json();
+    if (data.loggedIn) {
+      currentAccount = { username: data.username, displayUsername: data.displayUsername };
+    }
+  } catch {}
+  updateAuthNav();
+}
+
+function updateAuthNav() {
+  const loggedIn = !!currentAccount;
+  document.getElementById('nav-login-btn').style.display = loggedIn ? 'none' : '';
+  document.getElementById('nav-username').style.display = loggedIn ? '' : 'none';
+  document.getElementById('nav-logout-btn').style.display = loggedIn ? '' : 'none';
+  if (loggedIn) {
+    document.getElementById('nav-username').textContent = currentAccount.displayUsername;
+  }
+}
+
+function openAuthModal(tab = 'login') {
+  switchAuthTab(tab);
+  document.getElementById('auth-username').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('auth-username').focus(), 100);
+}
+
+function closeAuthModal(e) {
+  if (e && e.target !== document.getElementById('auth-modal-overlay')) return;
+  document.getElementById('auth-modal-overlay').classList.remove('open');
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-submit-btn').textContent = tab === 'login' ? 'Login' : 'Create Account';
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-submit-btn').dataset.tab = tab;
+}
+
+async function submitAuth() {
+  const tab = document.getElementById('auth-submit-btn').dataset.tab || 'login';
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+  try {
+    const endpoint = tab === 'login' ? '/api/auth/login' : '/api/auth/register';
+    const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Something went wrong.'; return; }
+    currentAccount = { username: data.username, displayUsername: data.displayUsername };
+    updateAuthNav();
+    document.getElementById('auth-modal-overlay').classList.remove('open');
+    // Reload saved users if on steamid page
+    if (!document.getElementById('page-steamid').classList.contains('hidden')) loadSavedUsers();
+    if (!document.getElementById('page-group').classList.contains('hidden')) loadGroupUsers();
+  } catch (e) { errEl.textContent = 'Network error. Please try again.'; }
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  currentAccount = null;
+  updateAuthNav();
+  // Clear saved users display
+  document.getElementById('saved-users-list').innerHTML = '<div class="saved-users-empty">Login to see saved users.</div>';
+}
+
+// Handle Enter key in auth modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('auth-modal-overlay').classList.contains('open')) {
+    submitAuth();
+  }
+  if (e.key === 'Escape' && document.getElementById('auth-modal-overlay').classList.contains('open')) {
+    document.getElementById('auth-modal-overlay').classList.remove('open');
+  }
+});
 
 // ── NAV ────────────────────────────────────────────────────────────────────
 function showPage(id) {
@@ -647,6 +784,8 @@ function updateNav(pageId) {
   document.getElementById('nav-btn-group').style.display = (!onLanding && !onApp && !onDeepGroup) ? '' : 'none';
   document.getElementById('nav-change-players').style.display = onDeepGroup ? '' : 'none';
   document.getElementById('nav-change-user').style.display = onApp ? '' : 'none';
+  // Auth buttons always visible based on login state — just call updateAuthNav
+  updateAuthNav();
 
   // Highlight active mode
   document.getElementById('nav-btn-single').classList.toggle('active', onSingle);
@@ -700,9 +839,19 @@ function goToGroup() {
 }
 document.getElementById('steamid-input').addEventListener('keydown', e => { if (e.key === 'Enter') launchApp(); });
 
+// Init auth state on load
+initAuth();
+
 // ── SAVED USERS ────────────────────────────────────────────────────────────
 async function loadSavedUsers() {
   const list = document.getElementById('saved-users-list');
+  if (!currentAccount) {
+    list.innerHTML = `<div class="saved-users-empty">
+      <div style="margin-bottom:12px">Login to save & recall Steam accounts</div>
+      <button onclick="openAuthModal('login')" style="background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;padding:8px 16px;cursor:pointer;text-transform:uppercase">Login / Register</button>
+    </div>`;
+    return;
+  }
   list.innerHTML = '<div class="saved-users-empty">Loading…</div>';
   try {
     const users = await (await fetch('/api/users')).json();
@@ -728,10 +877,18 @@ async function saveUser(sid, name) { try { await fetch('/api/users',{method:'POS
 // ── GROUP USER SELECT ──────────────────────────────────────────────────────
 async function loadGroupUsers() {
   selectedGroupIds = [];
-  ideasSelectedGames = []; // clear ideas selections when player group changes
+  ideasSelectedGames = [];
   groupData = null;
   allUsersGames = {};
   const grid = document.getElementById('group-users-grid');
+  if (!currentAccount) {
+    grid.innerHTML = `<div class="saved-users-empty">
+      <div style="margin-bottom:12px">Login to use Group mode with your saved accounts</div>
+      <button onclick="openAuthModal('login')" style="background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;padding:8px 16px;cursor:pointer;text-transform:uppercase">Login / Register</button>
+    </div>`;
+    document.getElementById('group-find-btn').disabled = true;
+    return;
+  }
   grid.innerHTML = '<div class="saved-users-empty">Loading…</div>';
   try {
     groupUsers = await (await fetch('/api/users')).json();
@@ -775,6 +932,14 @@ async function findGroupGames() {
   document.getElementById('pmb-ideas').classList.remove('active');
   document.getElementById('panel-random').style.display = '';
   document.getElementById('panel-ideas').style.display = 'none';
+  // Fully clear ideas tray and search
+  document.getElementById('ideas-tray').style.display = 'none';
+  document.getElementById('ideas-tray-games').innerHTML = '';
+  document.getElementById('ideas-tray-count').textContent = '0';
+  const gsi = document.getElementById('game-search-input');
+  if (gsi) gsi.value = '';
+  const gr = document.getElementById('game-results');
+  if (gr) gr.innerHTML = '<div class="game-search-empty">Start typing to search across all players\' libraries</div>';
 
   document.getElementById('gp-shared-count').textContent = '…';
   document.getElementById('gp-members').innerHTML = selectedGroupIds
@@ -922,11 +1087,21 @@ function buildTagSearch(allTags) {
 // ── PICKER MODE TOGGLE ─────────────────────────────────────────────────────
 function setPickerMode(mode) {
   pickerMode = mode;
+  // Clear ideas selections when switching modes
+  ideasSelectedGames = [];
+  renderIdeasTray();
   document.getElementById('pmb-random').classList.toggle('active', mode === 'random');
   document.getElementById('pmb-ideas').classList.toggle('active', mode === 'ideas');
   document.getElementById('panel-random').style.display = mode === 'random' ? '' : 'none';
   document.getElementById('panel-ideas').style.display = mode === 'ideas' ? '' : 'none';
-  if (mode === 'ideas') buildGameSearch();
+  if (mode === 'ideas') {
+    // Reset search input and results
+    const inp = document.getElementById('game-search-input');
+    if (inp) inp.value = '';
+    const res = document.getElementById('game-results');
+    if (res) res.innerHTML = '<div class="game-search-empty">Start typing to search across all players\' libraries</div>';
+    buildGameSearch();
+  }
 }
 
 // ── GAME SEARCH (I Have Ideas) ─────────────────────────────────────────────
