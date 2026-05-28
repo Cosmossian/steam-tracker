@@ -718,6 +718,9 @@ async function saveUser(sid, name) { try { await fetch('/api/users',{method:'POS
 // ── GROUP USER SELECT ──────────────────────────────────────────────────────
 async function loadGroupUsers() {
   selectedGroupIds = [];
+  ideasSelectedGames = []; // clear ideas selections when player group changes
+  groupData = null;
+  allUsersGames = {};
   const grid = document.getElementById('group-users-grid');
   grid.innerHTML = '<div class="saved-users-empty">Loading…</div>';
   try {
@@ -1018,22 +1021,24 @@ function renderIdeasTray() {
 
 async function startIdeasRoll() {
   if (!ideasSelectedGames.length) return;
+  // dedupe just in case
+  const uniqueGames = ideasSelectedGames.filter((g, i, arr) => arr.findIndex(x => x.appid === g.appid) === i);
   // If only one game selected, go straight to result
-  if (ideasSelectedGames.length === 1) {
-    await letsPlayThis(ideasSelectedGames[0].appid);
+  if (uniqueGames.length === 1) {
+    await letsPlayThis(uniqueGames[0].appid);
     return;
   }
   // Multiple — do the slot animation between selected games
   showPage('page-roll');
-  document.getElementById('roll-label').textContent = `Rolling between ${ideasSelectedGames.length} games…`;
+  document.getElementById('roll-label').textContent = `Rolling between ${uniqueGames.length} games…`;
   document.getElementById('roll-sublabel').textContent = '';
   document.getElementById('roll-progress-wrap').style.display = 'none';
 
-  const winnerId = ideasSelectedGames[Math.floor(Math.random() * ideasSelectedGames.length)].appid;
-  const winnerGame = groupData?.sharedGames?.find(g => g.appid === winnerId) || ideasSelectedGames.find(g => g.appid === winnerId);
+  const winnerId = uniqueGames[Math.floor(Math.random() * uniqueGames.length)].appid;
+  const winnerGame = groupData?.sharedGames?.find(g => g.appid === winnerId) || uniqueGames.find(g => g.appid === winnerId);
 
   const spinList = [];
-  for (let i = 0; i < 30; i++) spinList.push(ideasSelectedGames[i % ideasSelectedGames.length]);
+  for (let i = 0; i < 30; i++) spinList.push(uniqueGames[i % uniqueGames.length]);
   spinList.push({ appid: winnerId, name: winnerGame.name });
 
   const track = document.getElementById('slot-track');
@@ -1053,7 +1058,7 @@ async function startIdeasRoll() {
   await sleep(3400);
   document.getElementById('roll-sublabel').textContent = winnerGame.name;
 
-  filteredAppIds = ideasSelectedGames.map(g => g.appid);
+  filteredAppIds = uniqueGames.map(g => g.appid);
   rolledGame = groupData?.sharedGames?.find(g => g.appid === winnerId) || winnerGame;
   await sleep(600);
   await showResult(rolledGame);
@@ -1121,7 +1126,11 @@ async function startRoll() {
   filteredAppIds = matchedIds;
   const winnerId = matchedIds[Math.floor(Math.random() * matchedIds.length)];
   const winnerGame = groupData.sharedGames.find(g => g.appid === winnerId);
-  const matchedGames = matchedIds.map(id => groupData.sharedGames.find(g => g.appid === id)).filter(Boolean);
+  const seen = new Set();
+  const matchedGames = matchedIds
+    .map(id => groupData.sharedGames.find(g => g.appid === id))
+    .filter(Boolean)
+    .filter(g => { if (seen.has(g.appid)) return false; seen.add(g.appid); return true; });
 
   document.getElementById('roll-label').textContent = `${matchedIds.length} game${matchedIds.length !== 1 ? 's' : ''} — rolling…`;
 
