@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Steam Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #080b10; --surface: #0e1219; --card: #141925;
+    --border: #1e2535; --border-bright: #2e3f5c;
+    --accent: #4d9de0; --accent-glow: rgba(77,157,224,0.15);
+    --accent2: #e07d4d; --gold: #f5c842; --green: #4de08a;
+    --text: #c8d8e8; --muted: #5a6e88; --radius: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(77,157,224,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(77,157,224,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+
+  .page { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; transition: opacity .4s ease, transform .4s ease; }
+  .page.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+
+  /* LANDING */
+  #page-landing .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; animation: fadeDown .6s ease both; }
+  #page-landing .logo svg { width: 52px; height: 52px; }
+  #page-landing h1 { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 900; letter-spacing: 4px; color: #fff; text-transform: uppercase; }
+  #page-landing .subtitle { font-size: 13px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 60px; animation: fadeDown .6s .1s ease both; }
+  .mode-label { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 20px; animation: fadeDown .6s .2s ease both; }
+  .mode-cards { display: flex; gap: 20px; animation: fadeDown .6s .3s ease both; }
+  .mode-card { width: 220px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 28px 24px; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; text-align: center; position: relative; overflow: hidden; }
+  .mode-card::before { content: ''; position: absolute; inset: 0; background: var(--accent-glow); opacity: 0; transition: opacity .2s; }
+  .mode-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(77,157,224,0.15); }
+  .mode-card:hover::before { opacity: 1; }
+  .mode-card .icon { font-size: 36px; margin-bottom: 14px; display: block; }
+  .mode-card .title { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; color: #fff; text-transform: uppercase; margin-bottom: 8px; }
+  .mode-card .desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .back-btn { position: fixed; top: 24px; left: 28px; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 13px; letter-spacing: 1px; padding: 8px 16px; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .2s; z-index: 10; }
+  .back-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* STEAMID */
+  #page-steamid { gap: 0; }
+  .login-layout { display: flex; gap: 20px; align-items: flex-start; animation: fadeDown .5s ease both; }
+  .input-box { background: var(--surface); border: 1px solid var(--border-bright); border-radius: 14px; padding: 48px 52px; width: 480px; }
+  .input-box .step-tag { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+  .input-box h2 { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; margin-bottom: 8px; }
+  .input-box p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
+  .input-box p a { color: var(--accent); text-decoration: none; }
+  .field-label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; margin-top: 16px; }
+  .field-label:first-of-type { margin-top: 0; }
+  .input-row { display: flex; gap: 10px; }
+  .input-row input, .solo-input { flex: 1; background: var(--card); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 12px 16px; color: #fff; font-family: 'Exo 2', sans-serif; font-size: 15px; letter-spacing: 1px; outline: none; transition: border-color .2s, box-shadow .2s; width: 100%; }
+  .input-row input:focus, .solo-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .input-row input::placeholder, .solo-input::placeholder { color: var(--muted); letter-spacing: 0; }
+  .go-btn { background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; padding: 12px 20px; cursor: pointer; text-transform: uppercase; transition: background .2s, box-shadow .2s; white-space: nowrap; width: 100%; margin-top: 24px; }
+  .go-btn:hover { background: #5daff0; box-shadow: 0 0 20px rgba(77,157,224,0.4); }
+  .go-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .input-hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .input-error { margin-top: 10px; font-size: 12px; color: #e05a4d; display: none; }
+
+  /* SAVED USERS */
+  .saved-users-panel { background: var(--surface); border: 1px solid var(--border-bright); border-radius: 14px; padding: 28px 24px; width: 260px; min-height: 200px; max-height: 520px; display: flex; flex-direction: column; }
+  .saved-users-panel h3 { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; flex-shrink: 0; }
+  .saved-users-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .saved-user-row { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; transition: border-color .15s, transform .15s; }
+  .saved-user-row:hover { border-color: var(--accent); transform: translateX(2px); }
+  .saved-user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #1b6eb5, var(--accent)); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .saved-user-info { flex: 1; min-width: 0; }
+  .saved-user-name { font-size: 13px; font-weight: 600; color: #dce6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .saved-user-id { font-size: 10px; color: var(--muted); font-family: 'Orbitron', sans-serif; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .saved-user-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 4px; border-radius: 3px; transition: color .15s, background .15s; flex-shrink: 0; }
+  .saved-user-delete:hover { color: #e05a4d; background: rgba(224,90,77,0.1); }
+  .saved-users-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px 0; line-height: 1.6; }
+
+  /* MAIN APP */
+  #page-app { position: fixed; inset: 0; flex-direction: column; z-index: 1; align-items: stretch; justify-content: flex-start; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  .app-header { background: linear-gradient(180deg, #0a0d14 0%, transparent 100%); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .app-header svg { width: 28px; height: 28px; flex-shrink: 0; }
+  .app-header .app-title { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 3px; color: #fff; }
+  .app-header .user-pill { margin-left: 12px; background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--accent); }
+  .app-header .games-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 11px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); }
+  .app-header .change-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 12px; letter-spacing: 1px; padding: 6px 14px; border-radius: var(--radius); cursor: pointer; transition: all .2s; }
+  .app-header .change-btn:hover { color: var(--text); border-color: var(--accent); }
+  .app-layout { display: grid; grid-template-columns: 300px 1fr; flex: 1; overflow: hidden; height: calc(100vh - 57px); }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+  .search-wrap { padding: 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 5; }
+  .search-wrap input { width: 100%; background: var(--card); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 9px 14px; color: var(--text); font-family: 'Exo 2', sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .game-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border-left: 3px solid transparent; transition: background .15s, border-color .15s; }
+  .game-item:hover { background: var(--card); }
+  .game-item.active { background: rgba(77,157,224,0.07); border-left-color: var(--accent); }
+  .game-item img { width: 64px; height: 30px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--border); }
+  .game-item .gname { font-size: 13px; font-weight: 600; color: #dce6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .game-item .gtime { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'Orbitron', sans-serif; }
+  .sidebar-msg { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+  .main-content { overflow-y: auto; padding: 28px 32px; }
+  .placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--muted); }
+  .placeholder p { font-size: 16px; letter-spacing: 1px; font-family: 'Orbitron', sans-serif; }
+  .game-hero { display: flex; gap: 24px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .game-hero img { width: 230px; height: 108px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border-bright); flex-shrink: 0; }
+  .game-hero-info { display: flex; flex-direction: column; gap: 10px; }
+  .game-hero h2 { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 2px; }
+  .genre-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .genre-tag { font-size: 10px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; text-transform: uppercase; color: var(--accent2); background: rgba(224,125,77,0.08); border: 1px solid rgba(224,125,77,0.3); border-radius: 20px; padding: 3px 10px; }
+  .user-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .user-tag { font-size: 11px; font-family: 'Exo 2', sans-serif; font-weight: 600; color: var(--muted); background: rgba(77,157,224,0.05); border: 1px solid var(--border); border-radius: 4px; padding: 2px 9px; transition: color .15s, border-color .15s; }
+  .user-tag:hover { color: var(--accent); border-color: var(--border-bright); }
+  /* Category feature badges */
+  .cat-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+  .cat-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-family: 'Exo 2', sans-serif; font-weight: 600; letter-spacing: .3px; border-radius: 4px; padding: 3px 8px; border: 1px solid; }
+  .cat-badge.multi  { color: #4de08a; background: rgba(77,224,138,0.07); border-color: rgba(77,224,138,0.25); }
+  .cat-badge.single { color: #8899aa; background: rgba(136,153,170,0.07); border-color: rgba(136,153,170,0.2); }
+  .cat-badge.feat   { color: #9b8fd4; background: rgba(155,143,212,0.07); border-color: rgba(155,143,212,0.25); }
+  .stat-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; text-align: center; min-width: 80px; }
+  .stat-box .val { font-family: 'Orbitron', sans-serif; font-size: 20px; color: var(--accent); }
+  .stat-box .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+  .progress-wrap { margin-bottom: 24px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 8px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+  .progress-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #1b6eb5, var(--accent)); border-radius: 3px; transition: width .7s ease; }
+  .filters { display: flex; gap: 8px; margin-bottom: 20px; }
+  .filter-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 20px; cursor: pointer; font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .5px; transition: all .15s; }
+  .filter-btn:hover { color: var(--text); border-color: var(--muted); }
+  .filter-btn.active { background: rgba(77,157,224,.1); border-color: var(--accent); color: var(--accent); }
+  .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+  .ach-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; gap: 12px; align-items: flex-start; transition: border-color .15s, transform .15s; }
+  .ach-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .ach-card.locked { opacity: .45; filter: saturate(.25); }
+  .ach-card.locked:hover { opacity: .65; filter: saturate(.4); }
+  .ach-card img { width: 48px; height: 48px; border-radius: 4px; flex-shrink: 0; background: var(--border); }
+  .ach-name { font-weight: 600; font-size: 13px; color: #e8eff5; margin-bottom: 4px; }
+  .ach-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .ach-date { font-size: 11px; color: var(--gold); margin-top: 5px; font-family: 'Orbitron', sans-serif; }
+  .spinner { display: flex; justify-content: center; padding: 80px 0; }
+  .spinner::after { content: ''; width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .no-support { display: flex; flex-direction: column; align-items: center; padding: 80px 0; color: var(--muted); gap: 10px; font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px; }
+
+  /* ── PROGRESS BLOCK ───────────────────────────────────────────── */
+  .scan-progress-block { background: var(--card); border: 1px solid var(--border-bright); border-radius: 12px; padding: 24px 28px; width: 480px; }
+  .scan-progress-block .spb-label { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+  .scan-progress-block .spb-msg { font-size: 14px; color: var(--text); margin-bottom: 16px; min-height: 20px; }
+  .spb-bar-wrap { position: relative; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+  .spb-bar-fill { height: 100%; background: linear-gradient(90deg, #1b6eb5, var(--accent)); border-radius: 4px; transition: width .4s ease; width: 0%; }
+  .spb-bar-shimmer { position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); animation: shimmer 1.4s infinite; }
+  @keyframes shimmer { to { left: 120%; } }
+  .spb-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+  .spb-eta { color: var(--accent); }
+
+  /* ── GROUP PAGES ──────────────────────────────────────────────── */
+  #page-group { overflow-y: auto; padding: 40px 0; }
+  .group-title { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900; color: #fff; letter-spacing: 3px; margin-bottom: 6px; }
+  .group-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 36px; }
+  .group-header-tag { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+  .group-users-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 32px; justify-content: center; }
+  .group-user-card { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 20px 24px; cursor: pointer; transition: all .2s; text-align: center; min-width: 140px; position: relative; }
+  .group-user-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .group-user-card.selected { border-color: var(--accent); background: rgba(77,157,224,0.08); box-shadow: 0 0 20px rgba(77,157,224,0.15); }
+  .group-user-card .check { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+  .group-user-card.selected .check { display: flex; }
+  .group-user-card .gu-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #1b6eb5, var(--accent)); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0 auto 10px; }
+  .group-user-card .gu-name { font-size: 14px; font-weight: 600; color: #dce6f0; }
+  .group-user-card .gu-id { font-size: 10px; color: var(--muted); font-family: 'Orbitron', sans-serif; margin-top: 3px; }
+  .group-find-btn { background: var(--accent); border: none; border-radius: var(--radius); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; padding: 14px 40px; cursor: pointer; text-transform: uppercase; transition: background .2s, box-shadow .2s; }
+  .group-find-btn:hover { background: #5daff0; box-shadow: 0 0 24px rgba(77,157,224,0.4); }
+  .group-find-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* GROUP PICKER */
+  #page-group-picker { overflow-y: auto; padding: 32px 0; }
+  .gp-wrap { width: 860px; max-width: 95vw; }
+  .gp-section-label { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+  .gp-shared-info { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .gp-shared-count { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; color: var(--accent); }
+  .gp-shared-label { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .gp-members { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+  .gp-member-pill { background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-family: 'Orbitron', sans-serif; color: var(--accent); }
+
+  /* multi-tag pills */
+  .selected-tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; min-height: 28px; }
+  .sel-tag-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; font-family: 'Exo 2', sans-serif; font-weight: 600; color: var(--accent); background: rgba(77,157,224,0.1); border: 1px solid var(--accent); border-radius: 20px; padding: 4px 12px; cursor: default; }
+  .sel-tag-pill .remove-tag { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: .7; transition: opacity .15s; }
+  .sel-tag-pill .remove-tag:hover { opacity: 1; }
+
+  .top-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .top-tag-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; border-radius: 20px; cursor: pointer; font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600; transition: all .15s; }
+  .top-tag-btn:hover { color: var(--text); border-color: var(--muted); }
+  .top-tag-btn.active { background: rgba(77,157,224,.1); border-color: var(--accent); color: var(--accent); }
+
+  /* match mode toggle */
+  .match-mode-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .match-mode-label { font-size: 12px; color: var(--muted); font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+  .toggle-group { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .toggle-opt { padding: 6px 16px; font-size: 12px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); cursor: pointer; transition: all .15s; border: none; background: none; }
+  .toggle-opt.active { background: rgba(77,157,224,.15); color: var(--accent); }
+
+  .tag-search-wrap { position: relative; margin-bottom: 10px; }
+  .tag-search-wrap input { width: 100%; background: var(--card); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 10px 16px; color: #fff; font-family: 'Exo 2', sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
+  .tag-search-wrap input:focus { border-color: var(--accent); }
+  .tag-search-wrap input::placeholder { color: var(--muted); }
+  .tag-search-wrap input.invalid { border-color: #e05a4d; }
+  .tag-search-wrap input.valid { border-color: var(--green); }
+  .tag-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border-bright); border-top: none; border-radius: 0 0 var(--radius) var(--radius); max-height: 200px; overflow-y: auto; z-index: 20; display: none; }
+  .tag-dropdown.open { display: block; }
+  .tag-dropdown-item { padding: 9px 16px; font-size: 13px; cursor: pointer; transition: background .1s; }
+  .tag-dropdown-item:hover { background: var(--card); color: var(--accent); }
+
+  .roll-btn { background: linear-gradient(135deg, #1b6eb5, var(--accent)); border: none; border-radius: var(--radius); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 3px; padding: 16px 48px; cursor: pointer; text-transform: uppercase; transition: opacity .2s, box-shadow .2s; box-shadow: 0 0 30px rgba(77,157,224,0.3); margin-top: 8px; }
+  .roll-btn:hover { opacity: .9; box-shadow: 0 0 50px rgba(77,157,224,0.5); }
+  .roll-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+  /* ROLL PAGE */
+  #page-roll { overflow: hidden; }
+  .roll-stage { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .roll-stage-label { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; }
+  .slot-window { width: 460px; height: 240px; overflow: hidden; position: relative; border-radius: 12px; border: 1px solid var(--border-bright); box-shadow: 0 0 60px rgba(77,157,224,0.1); }
+  .slot-window::before, .slot-window::after { content: ''; position: absolute; left: 0; right: 0; height: 70px; z-index: 2; pointer-events: none; }
+  .slot-window::before { top: 0; background: linear-gradient(to bottom, var(--bg), transparent); }
+  .slot-window::after { bottom: 0; background: linear-gradient(to top, var(--bg), transparent); }
+  .slot-highlight { position: absolute; top: 50%; left: 0; right: 0; height: 80px; transform: translateY(-50%); border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent); background: rgba(77,157,224,0.04); z-index: 1; pointer-events: none; }
+  .slot-track { display: flex; flex-direction: column; transition: transform 0s; }
+  .slot-item { height: 80px; display: flex; align-items: center; gap: 16px; padding: 0 20px; flex-shrink: 0; }
+  .slot-item img { width: 120px; height: 56px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--border); }
+  .slot-item .sname { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+
+  /* inline progress for roll page */
+  .roll-progress-wrap { width: 460px; }
+
+  /* RESULT */
+  #page-result { overflow-y: auto; padding: 40px 0; }
+  .result-wrap { width: 900px; max-width: 95vw; }
+  .result-winner-banner { text-align: center; margin-bottom: 36px; animation: fadeDown .5s ease both; }
+  .result-winner-label { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+  .result-winner-name { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; color: #fff; letter-spacing: 2px; margin-bottom: 16px; }
+  .result-hero { display: flex; gap: 28px; margin-bottom: 32px; padding-bottom: 32px; border-bottom: 1px solid var(--border); animation: fadeDown .5s .1s ease both; }
+  .result-hero img { width: 320px; height: 150px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border-bright); flex-shrink: 0; box-shadow: 0 0 40px rgba(77,157,224,0.15); }
+  .result-hero-info { display: flex; flex-direction: column; gap: 12px; }
+  .result-user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; animation: fadeDown .5s .2s ease both; }
+  .result-user-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .result-user-card .ruc-name { font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--accent); margin-bottom: 14px; text-transform: uppercase; }
+  .result-user-card .ruc-stat { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+  .result-user-card .ruc-stat .rlbl { color: var(--muted); }
+  .result-user-card .ruc-stat .rval { color: #dce6f0; font-weight: 600; font-family: 'Orbitron', sans-serif; font-size: 12px; }
+  .result-user-card .ruc-bar-wrap { margin-top: 10px; }
+  .result-user-card .ruc-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 5px; font-family: 'Orbitron', sans-serif; }
+  .result-user-card .ruc-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .result-user-card .ruc-fill { height: 100%; background: linear-gradient(90deg, #1b6eb5, var(--accent)); border-radius: 2px; transition: width .8s ease; }
+  .reroll-btn { background: none; border: 1px solid var(--accent); color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; padding: 12px 32px; border-radius: var(--radius); cursor: pointer; text-transform: uppercase; transition: all .2s; margin-top: 32px; }
+  .reroll-btn:hover { background: var(--accent); color: #fff; box-shadow: 0 0 20px rgba(77,157,224,0.3); }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div class="page" id="page-landing">
+  <div class="logo">
+    <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
+    <h1>Steam Tracker</h1>
+  </div>
+  <div class="subtitle">Achievement Explorer</div>
+  <div class="mode-label">Select Mode</div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="goToSingle()">
+      <span class="icon">🎮</span>
+      <div class="title">Single User</div>
+      <div class="desc">Browse achievements for your own Steam account</div>
+    </div>
+    <div class="mode-card" onclick="goToGroup()">
+      <span class="icon">👥</span>
+      <div class="title">Group</div>
+      <div class="desc">Pick a random game from your shared library by tag</div>
+    </div>
+  </div>
+</div>
+
+<!-- SINGLE USER LOGIN -->
+<div class="page hidden" id="page-steamid">
+  <button class="back-btn" onclick="goBack('page-landing')">← Back</button>
+  <div class="login-layout">
+    <div class="input-box">
+      <div class="step-tag">Single User Mode</div>
+      <h2>Enter Your Steam ID</h2>
+      <p>Enter your 17-digit SteamID64. Find it at <a href="https://steamid.io" target="_blank">steamid.io</a>.</p>
+      <div class="field-label">Display Name <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <input class="solo-input" type="text" id="name-input" placeholder="e.g. DylanLucas" maxlength="40" />
+      <div class="field-label">SteamID64</div>
+      <div class="input-row"><input type="text" id="steamid-input" placeholder="76561198000000000" maxlength="20" /></div>
+      <div class="input-hint">Starts with 765611… and is 17 digits long</div>
+      <div class="input-error" id="steamid-error">Please enter a valid 17-digit SteamID64.</div>
+      <button class="go-btn" onclick="launchApp()">Launch</button>
+    </div>
+    <div class="saved-users-panel">
+      <h3>Saved Users</h3>
+      <div class="saved-users-list" id="saved-users-list"><div class="saved-users-empty">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SINGLE USER APP -->
+<div class="page hidden" id="page-app">
+  <div class="app-header">
+    <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
+    <span class="app-title">Steam Tracker</span>
+    <span class="user-pill" id="active-user-label"></span>
+    <span class="games-pill" id="games-count-label" style="display:none"></span>
+    <button class="change-btn" onclick="goBack('page-steamid')">Change User</button>
+  </div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="search-wrap"><input type="text" id="search" placeholder="Search games…" /></div>
+      <div id="game-list"><div class="sidebar-msg">Loading library…</div></div>
+    </aside>
+    <main class="main-content" id="main-content">
+      <div class="placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4d9de0" stroke-width="1" opacity=".4"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+        <p>Select a game</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- GROUP USER SELECT -->
+<div class="page hidden" id="page-group">
+  <button class="back-btn" onclick="goBack('page-landing')">← Back</button>
+  <div style="text-align:center;width:700px;max-width:95vw">
+    <div class="group-header-tag">Group Mode</div>
+    <div class="group-title">Who's Playing?</div>
+    <div class="group-subtitle">Select 2 or more users from your saved accounts</div>
+    <div class="group-users-grid" id="group-users-grid"><div class="saved-users-empty">Loading…</div></div>
+    <div id="group-select-msg" style="font-size:13px;color:var(--muted);margin-bottom:16px"></div>
+    <button class="group-find-btn" id="group-find-btn" onclick="findGroupGames()" disabled>Find Shared Games →</button>
+  </div>
+</div>
+
+<!-- GROUP TAG PICKER -->
+<div class="page hidden" id="page-group-picker">
+  <button class="back-btn" onclick="goBack('page-group')">← Back</button>
+  <div class="gp-wrap" style="text-align:center">
+
+    <!-- shared count + member pills -->
+    <div class="gp-shared-info">
+      <div>
+        <div class="gp-section-label">Shared Library</div>
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <span class="gp-shared-count" id="gp-shared-count">…</span>
+          <span class="gp-shared-label">multiplayer games<br>owned by all players</span>
+          <div id="gp-removed-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px;font-family:'Orbitron',sans-serif;letter-spacing:1px"></div>
+        </div>
+      </div>
+      <div class="gp-members" id="gp-members"></div>
+    </div>
+
+    <!-- scan progress (visible while loading) -->
+    <div id="scan-progress-wrap" class="scan-progress-block" style="margin-bottom:28px;display:none">
+      <div class="spb-label">Scanning Library</div>
+      <div class="spb-msg" id="spb-msg">Starting…</div>
+      <div class="spb-bar-wrap"><div class="spb-bar-fill" id="spb-fill"></div><div class="spb-bar-shimmer"></div></div>
+      <div class="spb-meta">
+        <span id="spb-count">0 / 0 games</span>
+        <span class="spb-eta" id="spb-eta">Estimating…</span>
+      </div>
+    </div>
+
+    <!-- tag content (hidden until scan done) -->
+    <div id="tag-content" style="display:none">
+      <div class="gp-section-label" style="text-align:left;margin-bottom:10px">Top Tags In Your Library</div>
+      <div class="top-tags" id="top-tags"></div>
+
+      <div class="gp-section-label" style="text-align:left;margin-bottom:10px;margin-top:24px">Search & Add Tags</div>
+      <div class="tag-search-wrap">
+        <input type="text" id="tag-search" placeholder="e.g. Co-op, Tower Defense…" autocomplete="off" />
+        <div class="tag-dropdown" id="tag-dropdown"></div>
+      </div>
+
+      <div class="selected-tags-row" id="selected-tags-row"></div>
+
+      <div class="match-mode-wrap" id="match-mode-wrap" style="display:none">
+        <span class="match-mode-label">Match Mode:</span>
+        <div class="toggle-group">
+          <button class="toggle-opt active" id="mode-all" onclick="setMatchMode('all')">ALL tags</button>
+          <button class="toggle-opt" id="mode-any" onclick="setMatchMode('any')">ANY tag</button>
+        </div>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px" id="mode-hint">Game must match every tag</span>
+      </div>
+
+      <button class="roll-btn" id="roll-btn" onclick="startRoll()" disabled>🎲 Roll The Dice</button>
+    </div>
+  </div>
+</div>
+
+<!-- DICE ROLL -->
+<div class="page hidden" id="page-roll">
+  <div class="roll-stage">
+    <div class="roll-stage-label" id="roll-label">Finding games…</div>
+    <div class="slot-window">
+      <div class="slot-highlight"></div>
+      <div class="slot-track" id="slot-track"></div>
+    </div>
+    <!-- inline filter progress shown before spin starts -->
+    <div class="roll-progress-wrap" id="roll-progress-wrap" style="display:none">
+      <div class="spb-bar-wrap"><div class="spb-bar-fill" id="roll-spb-fill"></div><div class="spb-bar-shimmer"></div></div>
+      <div class="spb-meta" style="margin-top:6px">
+        <span id="roll-spb-count">Filtering…</span>
+        <span class="spb-eta" id="roll-spb-eta"></span>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);font-family:'Orbitron',sans-serif;letter-spacing:1px" id="roll-sublabel"></div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="page hidden" id="page-result">
+  <button class="back-btn" onclick="goBack('page-group-picker')">← Pick Again</button>
+  <div class="result-wrap" id="result-wrap"></div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let currentSteamId = "", currentDisplayName = "";
+let allGames = [], activeAppId = null, cachedAchievements = {};
+let groupUsers = [], selectedGroupIds = [];
+let groupData = null;
+let selectedTags = [];   // array of selected tags
+let matchMode = 'all';   // 'all' | 'any'
+let filteredAppIds = [];
+let rolledGame = null;
+let scanStartTime = 0;
+
+// ── NAV ────────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('hidden', p.id !== id));
+  if (id === 'page-steamid') loadSavedUsers();
+  if (id === 'page-group') loadGroupUsers();
+}
+function goBack(p) { showPage(p); }
+function goToSingle() { showPage('page-steamid'); }
+function goToGroup() { showPage('page-group'); }
+document.getElementById('steamid-input').addEventListener('keydown', e => { if (e.key === 'Enter') launchApp(); });
+
+// ── SAVED USERS ────────────────────────────────────────────────────────────
+async function loadSavedUsers() {
+  const list = document.getElementById('saved-users-list');
+  list.innerHTML = '<div class="saved-users-empty">Loading…</div>';
+  try {
+    const users = await (await fetch('/api/users')).json();
+    if (!users.length) { list.innerHTML = '<div class="saved-users-empty">No saved users yet.</div>'; return; }
+    list.innerHTML = users.map(u => `
+      <div class="saved-user-row" onclick="selectSavedUser('${esc(u.steamId)}','${esc(u.displayName)}')">
+        <div class="saved-user-avatar">${esc(u.displayName.charAt(0).toUpperCase())}</div>
+        <div class="saved-user-info"><div class="saved-user-name">${esc(u.displayName)}</div><div class="saved-user-id">${esc(u.steamId)}</div></div>
+        <button class="saved-user-delete" onclick="deleteSavedUser(event,'${esc(u.steamId)}')">×</button>
+      </div>`).join('');
+  } catch { list.innerHTML = '<div class="saved-users-empty">Could not load.</div>'; }
+}
+function selectSavedUser(sid, name) {
+  document.getElementById('steamid-input').value = sid;
+  document.getElementById('name-input').value = name !== sid ? name : '';
+  document.getElementById('steamid-error').style.display = 'none';
+  document.getElementById('steamid-input').focus();
+}
+async function deleteSavedUser(e, sid) { e.stopPropagation(); try { await fetch(`/api/users/${sid}`,{method:'DELETE'}); loadSavedUsers(); } catch {} }
+async function saveUser(sid, name) { try { await fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({steamId:sid,displayName:name})}); } catch {} }
+
+// ── GROUP USER SELECT ──────────────────────────────────────────────────────
+async function loadGroupUsers() {
+  selectedGroupIds = [];
+  const grid = document.getElementById('group-users-grid');
+  grid.innerHTML = '<div class="saved-users-empty">Loading…</div>';
+  try {
+    groupUsers = await (await fetch('/api/users')).json();
+    if (!groupUsers.length) { grid.innerHTML = '<div class="saved-users-empty">No saved users. Add accounts in Single User mode first.</div>'; return; }
+    renderGroupUserGrid();
+  } catch { grid.innerHTML = '<div class="saved-users-empty">Could not load users.</div>'; }
+}
+function renderGroupUserGrid() {
+  document.getElementById('group-users-grid').innerHTML = groupUsers.map(u => `
+    <div class="group-user-card ${selectedGroupIds.includes(u.steamId)?'selected':''}" onclick="toggleGroupUser('${esc(u.steamId)}')">
+      <div class="check">✓</div>
+      <div class="gu-avatar">${esc(u.displayName.charAt(0).toUpperCase())}</div>
+      <div class="gu-name">${esc(u.displayName)}</div>
+      <div class="gu-id">…${esc(u.steamId.slice(-6))}</div>
+    </div>`).join('');
+  updateGroupFindBtn();
+}
+function toggleGroupUser(sid) {
+  selectedGroupIds = selectedGroupIds.includes(sid) ? selectedGroupIds.filter(id=>id!==sid) : [...selectedGroupIds, sid];
+  renderGroupUserGrid();
+}
+function updateGroupFindBtn() {
+  const n = selectedGroupIds.length;
+  document.getElementById('group-find-btn').disabled = n < 2;
+  document.getElementById('group-select-msg').textContent = n === 0 ? 'Select at least 2 users' : n === 1 ? 'Select 1 more user' : `${n} users selected`;
+}
+
+// ── FIND GROUP GAMES (SSE with progress) ──────────────────────────────────
+async function findGroupGames() {
+  showPage('page-group-picker');
+  selectedTags = [];
+  matchMode = 'all';
+  groupData = null;
+
+  document.getElementById('gp-shared-count').textContent = '…';
+  document.getElementById('gp-members').innerHTML = selectedGroupIds.map(sid => {
+    const u = groupUsers.find(u => u.steamId === sid);
+    return `<span class="gp-member-pill">${esc(u?.displayName||sid)}</span>`;
+  }).join('');
+  document.getElementById('scan-progress-wrap').style.display = '';
+  document.getElementById('tag-content').style.display = 'none';
+  document.getElementById('roll-btn').disabled = true;
+  document.getElementById('spb-msg').textContent = 'Fetching libraries…';
+  document.getElementById('spb-fill').style.width = '0%';
+  document.getElementById('spb-count').textContent = '';
+  document.getElementById('spb-eta').textContent = 'Estimating…';
+  scanStartTime = Date.now();
+
+  const ids = selectedGroupIds.join(',');
+  const evtSource = new EventSource(`/api/group/games?steamids=${ids}`);
+
+  evtSource.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'status') {
+      document.getElementById('spb-msg').textContent = msg.msg;
+      if (msg.total) {
+        document.getElementById('spb-count').textContent = `0 / ${msg.total} games`;
+        document.getElementById('spb-fill').style.width = '2%';
+      }
+    } else if (msg.type === 'progress') {
+      const pct = Math.round((msg.scanned / msg.total) * 100);
+      document.getElementById('spb-fill').style.width = pct + '%';
+      document.getElementById('spb-count').textContent = `${msg.scanned} / ${msg.total} games`;
+      // ETA calculation
+      const elapsed = (Date.now() - scanStartTime) / 1000;
+      const rate = msg.scanned / elapsed;
+      const remaining = rate > 0 ? Math.ceil((msg.total - msg.scanned) / rate) : null;
+      document.getElementById('spb-eta').textContent = remaining !== null
+        ? remaining > 60 ? `~${Math.ceil(remaining/60)}m remaining` : `~${remaining}s remaining`
+        : 'Estimating…';
+    } else if (msg.type === 'done') {
+      evtSource.close();
+      groupData = msg;
+      document.getElementById('gp-shared-count').textContent = msg.sharedCount;
+      // Show note if single-player games were removed
+      const removedNote = document.getElementById('gp-removed-note');
+      if (msg.singlePlayerRemoved > 0) {
+        removedNote.textContent = `(${msg.singlePlayerRemoved} single-player only game${msg.singlePlayerRemoved !== 1 ? 's' : ''} hidden)`;
+        removedNote.style.display = '';
+      } else {
+        removedNote.style.display = 'none';
+      }
+      document.getElementById('scan-progress-wrap').style.display = 'none';
+      document.getElementById('tag-content').style.display = '';
+      renderTopTags(msg.topTags);
+      buildTagSearch(msg.allTags);
+    } else if (msg.type === 'error') {
+      evtSource.close();
+      document.getElementById('spb-msg').textContent = 'Error: ' + msg.msg;
+      document.getElementById('spb-fill').style.width = '100%';
+      document.getElementById('spb-fill').style.background = '#e05a4d';
+    }
+  };
+  evtSource.onerror = () => { evtSource.close(); document.getElementById('spb-msg').textContent = 'Connection error.'; };
+}
+
+// ── TAG SELECTION ──────────────────────────────────────────────────────────
+function renderTopTags(tags) {
+  document.getElementById('top-tags').innerHTML = tags.map(t => `
+    <button class="top-tag-btn ${selectedTags.includes(t)?'active':''}" onclick="addTag('${esc(t)}')">${esc(t)}</button>`).join('');
+}
+
+function addTag(tag) {
+  if (selectedTags.includes(tag)) { removeTag(tag); return; }
+  selectedTags.push(tag);
+  document.getElementById('tag-search').value = '';
+  document.getElementById('tag-search').classList.remove('valid','invalid');
+  document.getElementById('tag-dropdown').classList.remove('open');
+  renderSelectedTags();
+  renderTopTags(groupData.topTags);
+  updateRollBtn();
+}
+
+function removeTag(tag) {
+  selectedTags = selectedTags.filter(t => t !== tag);
+  renderSelectedTags();
+  renderTopTags(groupData.topTags);
+  updateRollBtn();
+}
+
+function renderSelectedTags() {
+  document.getElementById('selected-tags-row').innerHTML = selectedTags.map(t => `
+    <span class="sel-tag-pill">${esc(t)}<button class="remove-tag" onclick="removeTag('${esc(t)}')">×</button></span>`).join('');
+  document.getElementById('match-mode-wrap').style.display = selectedTags.length >= 2 ? 'flex' : 'none';
+}
+
+function setMatchMode(mode) {
+  matchMode = mode;
+  document.getElementById('mode-all').classList.toggle('active', mode === 'all');
+  document.getElementById('mode-any').classList.toggle('active', mode === 'any');
+  document.getElementById('mode-hint').textContent = mode === 'all' ? 'Game must match every tag' : 'Game must match at least one tag';
+}
+
+function updateRollBtn() {
+  document.getElementById('roll-btn').disabled = selectedTags.length === 0;
+}
+
+function buildTagSearch(allTags) {
+  const input = document.getElementById('tag-search');
+  const dropdown = document.getElementById('tag-dropdown');
+  // remove old listener by cloning
+  const fresh = input.cloneNode(true);
+  input.parentNode.replaceChild(fresh, input);
+
+  fresh.addEventListener('input', () => {
+    const q = fresh.value.toLowerCase().trim();
+    if (!q) { dropdown.classList.remove('open'); fresh.classList.remove('valid','invalid'); return; }
+    const matches = allTags.filter(t => t.toLowerCase().includes(q)).slice(0, 20);
+    if (!matches.length) { dropdown.classList.remove('open'); fresh.classList.add('invalid'); fresh.classList.remove('valid'); return; }
+    dropdown.innerHTML = matches.map(t => `<div class="tag-dropdown-item" onclick="addTag('${esc(t)}')">${esc(t)}</div>`).join('');
+    dropdown.classList.add('open');
+    const exact = allTags.find(t => t.toLowerCase() === q);
+    if (exact) { fresh.classList.add('valid'); fresh.classList.remove('invalid'); }
+    else { fresh.classList.remove('valid','invalid'); }
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.tag-search-wrap')) dropdown.classList.remove('open'); });
+}
+
+// ── ROLL (SSE filter + animation) ─────────────────────────────────────────
+async function startRoll() {
+  if (!selectedTags.length || !groupData) return;
+  showPage('page-roll');
+
+  document.getElementById('roll-label').textContent = `Filtering by ${selectedTags.length} tag${selectedTags.length>1?'s':''}…`;
+  document.getElementById('roll-sublabel').textContent = '';
+  document.getElementById('roll-progress-wrap').style.display = '';
+  document.getElementById('slot-track').innerHTML = '';
+  document.getElementById('roll-spb-fill').style.width = '0%';
+  document.getElementById('roll-spb-count').textContent = 'Filtering…';
+  document.getElementById('roll-spb-eta').textContent = '';
+
+  const allAppIds = groupData.sharedGames.map(g => g.appid);
+  const tagsEncoded = selectedTags.map(encodeURIComponent).join(',');
+  const filterStart = Date.now();
+
+  // SSE for filter progress
+  const matchedIds = await new Promise((resolve) => {
+    const url = `/api/group/filter?steamids=${selectedGroupIds.join(',')}&tags=${tagsEncoded}&mode=${matchMode}&appids=${allAppIds.join(',')}`;
+    const es = new EventSource(url);
+    es.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'progress') {
+        const pct = Math.round((msg.scanned / msg.total) * 100);
+        document.getElementById('roll-spb-fill').style.width = pct + '%';
+        document.getElementById('roll-spb-count').textContent = `${msg.scanned} / ${msg.total} games`;
+        const elapsed = (Date.now() - filterStart) / 1000;
+        const rate = msg.scanned / elapsed;
+        const remaining = rate > 0 ? Math.ceil((msg.total - msg.scanned) / rate) : null;
+        document.getElementById('roll-spb-eta').textContent = remaining !== null
+          ? remaining > 60 ? `~${Math.ceil(remaining/60)}m` : `~${remaining}s`
+          : '';
+      } else if (msg.type === 'done') {
+        es.close(); resolve(msg.matched || []);
+      } else if (msg.type === 'error') {
+        es.close(); resolve([]);
+      }
+    };
+    es.onerror = () => { es.close(); resolve(allAppIds); };
+  });
+
+  document.getElementById('roll-progress-wrap').style.display = 'none';
+
+  if (!matchedIds.length) {
+    document.getElementById('roll-label').textContent = 'No matching games found';
+    document.getElementById('roll-sublabel').textContent = `No shared games match ${matchMode === 'all' ? 'all' : 'any of'} the selected tags`;
+    setTimeout(() => showPage('page-group-picker'), 3000);
+    return;
+  }
+
+  filteredAppIds = matchedIds;
+  const winnerId = matchedIds[Math.floor(Math.random() * matchedIds.length)];
+  const winnerGame = groupData.sharedGames.find(g => g.appid === winnerId);
+  const matchedGames = matchedIds.map(id => groupData.sharedGames.find(g => g.appid === id)).filter(Boolean);
+
+  document.getElementById('roll-label').textContent = `${matchedIds.length} game${matchedIds.length !== 1 ? 's' : ''} — rolling…`;
+
+  // Build slot list
+  const spinList = [];
+  for (let i = 0; i < 30; i++) spinList.push(matchedGames[i % matchedGames.length]);
+  spinList.push(winnerGame);
+
+  const track = document.getElementById('slot-track');
+  track.style.transition = 'none';
+  track.style.transform = 'translateY(0)';
+  track.innerHTML = spinList.map(g => `
+    <div class="slot-item">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0"/>
+      <div class="sname">${esc(g.name)}</div>
+    </div>`).join('');
+
+  const itemH = 80;
+  const targetY = -(spinList.length - 1) * itemH + (240 / 2 - itemH / 2);
+  await sleep(200);
+  track.style.transition = 'transform 3.2s cubic-bezier(0.23, 1, 0.32, 1)';
+  track.style.transform = `translateY(${targetY}px)`;
+  await sleep(3400);
+  document.getElementById('roll-sublabel').textContent = winnerGame.name;
+
+  rolledGame = winnerGame;
+  await sleep(600);
+  await showResult(winnerGame);
+}
+
+async function showResult(game) {
+  showPage('page-result');
+  const wrap = document.getElementById('result-wrap');
+  wrap.innerHTML = '<div class="spinner"></div>';
+  try {
+    const ids = selectedGroupIds.join(',');
+    const details = await (await fetch(`/api/group/gamedetails?appid=${game.appid}&steamids=${ids}`)).json();
+    const genres = details.genres || [], tags = details.tags || [], categories = details.categories || [];
+
+    const userCardsHTML = selectedGroupIds.map(sid => {
+      const u = groupUsers.find(u => u.steamId === sid);
+      const displayName = u?.displayName || sid;
+      const pg = game.perUser?.find(p => p.steamId === sid) || {};
+      const ach = details.userStats?.find(s => s.steamId === sid) || {};
+      return `
+        <div class="result-user-card">
+          <div class="ruc-name">${esc(displayName)}</div>
+          <div class="ruc-stat"><span class="rlbl">Playtime</span><span class="rval">${fmtH(pg.playtime||0)}</span></div>
+          <div class="ruc-stat"><span class="rlbl">Last Played</span><span class="rval">${fmtDate2(pg.lastPlayed||0)}</span></div>
+          <div class="ruc-stat"><span class="rlbl">Achievements</span><span class="rval">${ach.supported?`${ach.unlocked}/${ach.total}`:'N/A'}</span></div>
+          ${ach.supported?`<div class="ruc-bar-wrap"><div class="ruc-bar-label"><span>Completion</span><span>${ach.pct}%</span></div><div class="ruc-bar"><div class="ruc-fill" style="width:${ach.pct}%"></div></div></div>`:''}
+        </div>`;
+    }).join('');
+
+    const tagSummary = selectedTags.map(t=>`<span class="user-tag" style="display:inline-block">${esc(t)}</span>`).join(matchMode==='all'?' + ':' or ');
+
+    wrap.innerHTML = `
+      <div class="result-winner-banner">
+        <div class="result-winner-label">🎲 Tonight You're Playing</div>
+        <div class="result-winner-name">${esc(game.name)}</div>
+        ${genres.length?`<div class="genre-tags" style="justify-content:center">${genres.map(g=>`<span class="genre-tag">${esc(g)}</span>`).join('')}</div>`:''}
+      </div>
+      <div class="result-hero">
+        <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg" alt="" onerror="this.style.opacity=.3"/>
+        <div class="result-hero-info">
+          ${catBadgesHTML(categories)}
+          ${tags.length?`<div class="user-tags">${tags.map(t=>`<span class="user-tag">${esc(t)}</span>`).join('')}</div>`:''}
+          <div style="font-size:13px;color:var(--muted);line-height:1.8">
+            <span style="color:var(--accent);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px">FILTERED BY</span><br>
+            ${tagSummary}
+            <span style="font-size:10px;color:var(--muted);margin-left:6px">(${matchMode.toUpperCase()})</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">1 of ${filteredAppIds.length} matching game${filteredAppIds.length!==1?'s':''}</div>
+        </div>
+      </div>
+      <div class="gp-section-label" style="text-align:left;margin-bottom:14px">Player Stats</div>
+      <div class="result-user-grid">${userCardsHTML}</div>
+      <div style="text-align:center"><button class="reroll-btn" onclick="startRoll()">🎲 Re-roll</button></div>`;
+
+    requestAnimationFrame(() => {
+      wrap.querySelectorAll('.ruc-fill').forEach(el => {
+        const w = el.style.width; el.style.width = '0%';
+        requestAnimationFrame(() => { el.style.width = w; });
+      });
+    });
+  } catch (e) {
+    wrap.innerHTML = `<div class="no-support"><p>Error: ${e.message}</p></div>`;
+  }
+}
+
+// ── SINGLE USER ────────────────────────────────────────────────────────────
+async function launchApp() {
+  const val = document.getElementById('steamid-input').value.trim();
+  const name = document.getElementById('name-input').value.trim();
+  const errEl = document.getElementById('steamid-error');
+  if (!/^\d{17}$/.test(val)) { errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  currentSteamId = val; currentDisplayName = name || val;
+  await saveUser(currentSteamId, currentDisplayName);
+  document.getElementById('active-user-label').textContent = currentDisplayName;
+  document.getElementById('games-count-label').style.display = 'none';
+  showPage('page-app');
+  allGames = []; activeAppId = null; cachedAchievements = {};
+  document.getElementById('game-list').innerHTML = '<div class="sidebar-msg">Loading library…</div>';
+  document.getElementById('main-content').innerHTML = `<div class="placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4d9de0" stroke-width="1" opacity=".4"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg><p>Select a game</p></div>`;
+  loadGames();
+}
+async function loadGames() {
+  try {
+    allGames = await (await fetch(`/api/games?steamid=${currentSteamId}`)).json();
+    if (allGames.error) throw new Error(allGames.error);
+    renderSidebar(allGames);
+  } catch (e) { document.getElementById('game-list').innerHTML = `<div class="sidebar-msg" style="color:#e05a4d">Error: ${e.message}</div>`; }
+}
+function renderSidebar(games) {
+  const list = document.getElementById('game-list');
+  const countEl = document.getElementById('games-count-label');
+  if (countEl && allGames.length) { countEl.textContent = allGames.length+' games'; countEl.style.display=''; }
+  if (!games.length) { list.innerHTML = '<div class="sidebar-msg">No games found.</div>'; return; }
+  list.innerHTML = games.map(g => `
+    <div class="game-item" data-appid="${g.appid}" onclick="loadGame(${g.appid},this)">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0"/>
+      <div><div class="gname">${esc(g.name)}</div><div class="gtime">${fmtH(g.playtime_forever)}</div></div>
+    </div>`).join('');
+  if (activeAppId) { const el = list.querySelector(`[data-appid="${activeAppId}"]`); if (el) el.classList.add('active'); }
+}
+document.getElementById('search').addEventListener('input', e => { renderSidebar(allGames.filter(g=>g.name.toLowerCase().includes(e.target.value.toLowerCase()))); });
+
+let currentFilter = 'all';
+async function loadGame(appId, el) {
+  if (activeAppId === appId) return;
+  activeAppId = appId;
+  document.querySelectorAll('.game-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('main-content').innerHTML = '<div class="spinner"></div>';
+  try {
+    let data = cachedAchievements[appId];
+    if (!data) { data = await (await fetch(`/api/achievements/${appId}?steamid=${currentSteamId}`)).json(); cachedAchievements[appId] = data; }
+    const game = allGames.find(g=>g.appid===appId)||{};
+    currentFilter = 'all';
+    if (!data.supported) renderNoSupport(game,appId,data.genres||[],data.tags||[],data.categories||[]);
+    else renderGame(game,appId,data.achievements,data.genres||[],data.tags||[],data.categories||[]);
+  } catch (e) { document.getElementById('main-content').innerHTML=`<div class="no-support"><p>Error: ${e.message}</p></div>`; }
+}
+function genreTagsHTML(g) { return g?.length?`<div class="genre-tags">${g.map(x=>`<span class="genre-tag">${esc(x)}</span>`).join('')}</div>`:''; }
+function userTagsHTML(t) { return t?.length?`<div class="user-tags">${t.map(x=>`<span class="user-tag">${esc(x)}</span>`).join('')}</div>`:''; }
+
+// Category badge icons + type mapping
+const CAT_META = {
+  "Single-player":              { icon: "👤", type: "single" },
+  "Multi-player":               { icon: "👥", type: "multi"  },
+  "Co-op":                      { icon: "🤝", type: "multi"  },
+  "Online Co-op":               { icon: "🌐", type: "multi"  },
+  "Local Co-op":                { icon: "🛋️", type: "multi"  },
+  "Online PvP":                 { icon: "⚔️", type: "multi"  },
+  "Local PvP":                  { icon: "🎮", type: "multi"  },
+  "Cross-Platform Multiplayer": { icon: "🔗", type: "multi"  },
+  "Steam Achievements":         { icon: "🏆", type: "feat"   },
+  "Steam Trading Cards":        { icon: "🃏", type: "feat"   },
+  "Steam Cloud":                { icon: "☁️", type: "feat"   },
+  "Family Sharing":             { icon: "👨‍👩‍👧", type: "feat"   },
+  "Full controller support":    { icon: "🕹️", type: "feat"   },
+  "Partial Controller Support": { icon: "🕹️", type: "feat"   },
+};
+function catBadgesHTML(cats) {
+  if (!cats?.length) return '';
+  return `<div class="cat-badges">${cats.map(c => {
+    const m = CAT_META[c] || { icon: "•", type: "feat" };
+    return `<span class="cat-badge ${m.type}">${m.icon} ${esc(c)}</span>`;
+  }).join('')}</div>`;
+}
+function renderGame(game,appId,achievements,genres,tags,categories) {
+  const total=achievements.length, unlocked=achievements.filter(a=>a.achieved).length, pct=total?Math.round(unlocked/total*100):0;
+  document.getElementById('main-content').innerHTML=`
+    <div class="game-hero">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg" alt="" onerror="this.style.opacity=.3"/>
+      <div class="game-hero-info"><h2>${esc(game.name||'Unknown')}</h2>${genreTagsHTML(genres)}${catBadgesHTML(categories)}${userTagsHTML(tags)}
+        <div class="stat-row">
+          <div class="stat-box"><div class="val">${fmtH(game.playtime_forever)}</div><div class="lbl">Played</div></div>
+          <div class="stat-box"><div class="val">${unlocked}</div><div class="lbl">Unlocked</div></div>
+          <div class="stat-box"><div class="val">${total}</div><div class="lbl">Total</div></div>
+          <div class="stat-box"><div class="val">${pct}%</div><div class="lbl">Done</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-wrap"><div class="progress-label"><span>Completion</span><span>${unlocked}/${total}</span></div><div class="progress-bar"><div class="progress-fill" id="pfill" style="width:0%"></div></div></div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all',this,${appId})">All</button>
+      <button class="filter-btn" onclick="setFilter('unlocked',this,${appId})">Unlocked</button>
+      <button class="filter-btn" onclick="setFilter('locked',this,${appId})">Locked</button>
+    </div>
+    <div class="ach-grid" id="ach-grid"></div>`;
+  requestAnimationFrame(()=>{ document.getElementById('pfill').style.width=pct+'%'; });
+  renderAchievements(achievements);
+}
+function renderNoSupport(game,appId,genres,tags,categories) {
+  document.getElementById('main-content').innerHTML=`
+    <div class="game-hero">
+      <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg" alt="" onerror="this.style.opacity=.3"/>
+      <div class="game-hero-info"><h2>${esc(game.name||'Unknown')}</h2>${genreTagsHTML(genres)}${catBadgesHTML(categories)}${userTagsHTML(tags)}
+        <div class="stat-row"><div class="stat-box"><div class="val">${fmtH(game.playtime_forever)}</div><div class="lbl">Played</div></div></div>
+      </div>
+    </div>
+    <div class="no-support"><p>No achievement support for this game</p></div>`;
+}
+function setFilter(f,btn,appId) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+  const data=cachedAchievements[appId]; if(data?.achievements) renderAchievements(data.achievements);
+}
+function renderAchievements(achievements) {
+  const grid=document.getElementById('ach-grid'); if(!grid) return;
+  let list=achievements;
+  if(currentFilter==='unlocked') list=achievements.filter(a=>a.achieved);
+  if(currentFilter==='locked') list=achievements.filter(a=>!a.achieved);
+  if(!list.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--muted)">Nothing here.</div>`;return;}
+  grid.innerHTML=list.map(a=>`
+    <div class="ach-card ${a.achieved?'achieved':'locked'}">
+      ${a.icon?`<img src="${a.icon}" alt=""/>`:`<div style="width:48px;height:48px;background:var(--border);border-radius:4px;flex-shrink:0"></div>`}
+      <div><div class="ach-name">${esc(a.displayName||a.apiname)}</div>${a.description?`<div class="ach-desc">${esc(a.description)}</div>`:''}${a.achieved&&a.unlocktime?`<div class="ach-date">${fmtDate(a.unlocktime)}</div>`:''}</div>
+    </div>`).join('');
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtH(m){return m?(m/60).toFixed(1)+'h':'0h';}
+function fmtDate(ts){return new Date(ts*1000).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
+function fmtDate2(ts){
+  if(!ts)return'Never';
+  const d=Math.floor((Date.now()-ts*1000)/86400000);
+  if(d===0)return'Today';if(d===1)return'Yesterday';
+  if(d<7)return`${d}d ago`;if(d<30)return`${Math.floor(d/7)}w ago`;
+  if(d<365)return`${Math.floor(d/30)}mo ago`;return`${Math.floor(d/365)}yr ago`;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+</script>
+</body>
+</html>

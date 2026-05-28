@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: steam-tracker
+    runtime: docker
+    plan: free
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: PORT
+        value: 3000
