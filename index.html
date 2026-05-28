@@ -360,6 +360,7 @@
   <div class="nav-divider"></div>
   <button class="nav-btn" id="nav-btn-single" onclick="goToSingle()" style="display:none">🎮 Single User</button>
   <button class="nav-btn" id="nav-btn-group" onclick="goToGroup()" style="display:none">👥 Group</button>
+  <button class="nav-btn" id="nav-change-players" onclick="goToGroup()" style="display:none">← Change Players</button>
   <div class="nav-right">
     <span class="nav-user-pill" id="nav-user-pill"></span>
     <span class="nav-games-pill" id="nav-games-pill"></span>
@@ -641,8 +642,10 @@ function updateNav(pageId) {
   const onSingle = ['page-steamid','page-app'].includes(pageId);
   const onGroup = ['page-group','page-group-picker','page-roll','page-result'].includes(pageId);
 
+  const onDeepGroup = ['page-group-picker','page-roll','page-result'].includes(pageId);
   document.getElementById('nav-btn-single').style.display = (!onLanding && !onApp) ? '' : 'none';
-  document.getElementById('nav-btn-group').style.display = (!onLanding && !onApp) ? '' : 'none';
+  document.getElementById('nav-btn-group').style.display = (!onLanding && !onApp && !onDeepGroup) ? '' : 'none';
+  document.getElementById('nav-change-players').style.display = onDeepGroup ? '' : 'none';
   document.getElementById('nav-change-user').style.display = onApp ? '' : 'none';
 
   // Highlight active mode
@@ -687,7 +690,14 @@ function toggleSubModes(which) {
 
 function goBack(p) { showPage(p); }
 function goToSingle() { showPage('page-steamid'); }
-function goToGroup() { showPage('page-group'); }
+function goToGroup() {
+  // Always fully reset group state when going back to player select
+  ideasSelectedGames = [];
+  groupData = null;
+  allUsersGames = {};
+  selectedGroupIds = [];
+  showPage('page-group');
+}
 document.getElementById('steamid-input').addEventListener('keydown', e => { if (e.key === 'Enter') launchApp(); });
 
 // ── SAVED USERS ────────────────────────────────────────────────────────────
