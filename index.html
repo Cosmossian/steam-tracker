@@ -566,8 +566,12 @@ async function findGroupGames() {
 }
 
 // ── TAG SELECTION ──────────────────────────────────────────────────────────
+// Tags that should never appear in group mode
+const GROUP_BLOCKED_TAGS = new Set(['single-player', 'singleplayer', 'single player']);
+
 function renderTopTags(tags) {
-  document.getElementById('top-tags').innerHTML = tags.map(t => `
+  const filtered = tags.filter(t => !GROUP_BLOCKED_TAGS.has(t.toLowerCase()));
+  document.getElementById('top-tags').innerHTML = filtered.map(t => `
     <button class="top-tag-btn ${selectedTags.includes(t)?'active':''}" onclick="addTag('${esc(t)}')">${esc(t)}</button>`).join('');
 }
 
@@ -616,7 +620,7 @@ function buildTagSearch(allTags) {
   fresh.addEventListener('input', () => {
     const q = fresh.value.toLowerCase().trim();
     if (!q) { dropdown.classList.remove('open'); fresh.classList.remove('valid','invalid'); return; }
-    const matches = allTags.filter(t => t.toLowerCase().includes(q)).slice(0, 20);
+    const matches = allTags.filter(t => !GROUP_BLOCKED_TAGS.has(t.toLowerCase()) && t.toLowerCase().includes(q)).slice(0, 20);
     if (!matches.length) { dropdown.classList.remove('open'); fresh.classList.add('invalid'); fresh.classList.remove('valid'); return; }
     dropdown.innerHTML = matches.map(t => `<div class="tag-dropdown-item" onclick="addTag('${esc(t)}')">${esc(t)}</div>`).join('');
     dropdown.classList.add('open');
