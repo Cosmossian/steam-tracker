@@ -371,7 +371,73 @@
   .reroll-btn { background: none; border: 1px solid var(--accent); color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; padding: 12px 32px; border-radius: var(--radius); cursor: pointer; text-transform: uppercase; transition: all .2s; margin-top: 32px; }
   .reroll-btn:hover { background: var(--accent); color: #fff; box-shadow: 0 0 20px rgba(77,157,224,0.3); }
 
+  /* ── STEAM WRAPPED ──────────────────────────────────────────────────────── */
+
+  /* Loading screen */
+  #page-wrapped-load { background: var(--bg); }
+  .wrapped-load-inner { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 480px; max-width: 95vw; }
+  .wrapped-load-title { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #fff; text-align: center; }
+  .wrapped-load-title span { background: linear-gradient(90deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .wrapped-load-sub { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+
+  /* Slideshow */
+  #page-wrapped-slides {
+    background: var(--bg);
+    cursor: pointer;
+  }
+  .wrapped-slide {
+    position: absolute; inset: 52px 0 0 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .5s ease, transform .5s ease;
+    transform: translateY(30px);
+  }
+  .wrapped-slide.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+  .wrapped-slide.exit { opacity: 0; transform: translateY(-30px); }
+
+  .ws-eyebrow { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+  .ws-number { font-family: 'Orbitron', sans-serif; font-size: 96px; font-weight: 900; line-height: 1; margin-bottom: 12px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .ws-label { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 2px; text-align: center; margin-bottom: 8px; }
+  .ws-sub { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; max-width: 480px; }
+  .ws-game-cover { width: 320px; height: 150px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border-bright); box-shadow: 0 0 60px rgba(77,157,224,0.2); margin-bottom: 20px; }
+  .ws-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 8px 20px; font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--accent); letter-spacing: 1px; margin-top: 12px; }
+  .ws-ach-icon { width: 64px; height: 64px; border-radius: 8px; margin-bottom: 16px; }
+  .ws-progress-dots { display: flex; gap: 8px; position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); }
+  .ws-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all .3s; }
+  .ws-dot.active { background: var(--accent); width: 24px; border-radius: 3px; }
+  .ws-hint { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--muted); letter-spacing: 2px; font-family: 'Orbitron', sans-serif; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+  .ws-top-list { display: flex; flex-direction: column; gap: 10px; width: 480px; max-width: 90vw; margin-top: 16px; }
+  .ws-top-row { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+  .ws-top-rank { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 900; color: var(--border-bright); width: 28px; flex-shrink: 0; text-align: center; }
+  .ws-top-rank.gold { color: var(--gold); }
+  .ws-top-img { width: 80px; height: 37px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--border); }
+  .ws-top-name { flex: 1; font-size: 13px; font-weight: 600; color: #dce6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-top-val { font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--accent); flex-shrink: 0; }
+
+  /* Scrollable summary */
+  #page-wrapped-summary { overflow-y: auto; padding: 40px 0 80px; }
+  .wrapped-summary-inner { width: 820px; max-width: 95vw; }
+  .wrapped-summary-hero { text-align: center; margin-bottom: 48px; }
+  .wrapped-summary-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 4px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .wrapped-summary-hero .wsh-sub { font-size: 14px; color: var(--muted); }
+  .wrapped-year-tabs { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center; }
+  .wrapped-year-tab { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 6px 18px; border-radius: 20px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; transition: all .15s; }
+  .wrapped-year-tab:hover { border-color: var(--muted); color: var(--text); }
+  .wrapped-year-tab.active { background: rgba(77,157,224,.1); border-color: var(--accent); color: var(--accent); }
+  .wrapped-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .wrapped-stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .wrapped-stat-card .wsc-label { font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .wrapped-stat-card .wsc-value { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 6px; }
+  .wrapped-stat-card .wsc-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .wrapped-stat-card.featured { grid-column: span 2; background: linear-gradient(135deg, rgba(77,157,224,0.08), rgba(167,139,250,0.08)); border-color: var(--border-bright); }
+  .wrapped-stat-card.featured .wsc-value { font-size: 42px; }
+  .wrapped-top-games { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+
 </style>
 </head>
 <body>
@@ -444,11 +510,10 @@
               <div class="title">Achievements</div>
               <div class="desc">Browse your game library and track achievement progress</div>
             </div>
-            <div class="sub-mode-card soon">
+            <div class="sub-mode-card" onclick="goToWrapped()">
               <span class="icon">📊</span>
-              <div class="title">Library Stats</div>
-              <div class="desc">Your playtime, completion rate & gaming wrapped</div>
-              <span class="soon-badge">Coming Soon</span>
+              <div class="title">Steam Wrapped</div>
+              <div class="desc">Your gaming year in review — stats, highlights & more</div>
             </div>
             <div class="sub-mode-card soon">
               <span class="icon">🎯</span>
@@ -665,6 +730,33 @@
   <div class="result-wrap" id="result-wrap"></div>
 </div>
 
+<!-- STEAM WRAPPED: LOADING -->
+<div class="page hidden" id="page-wrapped-load">
+  <div class="wrapped-load-inner">
+    <div class="wrapped-load-title">Steam<br><span>Wrapped</span></div>
+    <div class="wrapped-load-sub" id="wrapped-load-msg">Gathering your stats…</div>
+    <div style="width:100%">
+      <div class="spb-bar-wrap"><div class="spb-bar-fill" id="wrapped-spb-fill"></div><div class="spb-bar-shimmer"></div></div>
+      <div class="spb-meta" style="margin-top:8px">
+        <span id="wrapped-spb-count"></span>
+        <span class="spb-eta" id="wrapped-spb-eta"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEAM WRAPPED: SLIDESHOW -->
+<div class="page hidden" id="page-wrapped-slides" onclick="nextWrappedSlide()" onkeydown="if(event.key==='ArrowRight'||event.key===' ')nextWrappedSlide()" tabindex="0">
+  <div id="wrapped-slides-container"></div>
+  <div class="ws-progress-dots" id="ws-dots"></div>
+  <div class="ws-hint" id="ws-hint">TAP TO CONTINUE →</div>
+</div>
+
+<!-- STEAM WRAPPED: SUMMARY SCROLL -->
+<div class="page hidden" id="page-wrapped-summary">
+  <div class="wrapped-summary-inner" id="wrapped-summary-inner"></div>
+</div>
+
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
 let currentSteamId = "", currentDisplayName = "";
@@ -778,6 +870,7 @@ function updateNav(pageId) {
   const onApp = pageId === 'page-app';
   const onSingle = ['page-steamid','page-app'].includes(pageId);
   const onGroup = ['page-group','page-group-picker','page-roll','page-result'].includes(pageId);
+  const onWrapped = ['page-wrapped-load','page-wrapped-slides','page-wrapped-summary'].includes(pageId);
 
   const onDeepGroup = ['page-group-picker','page-roll','page-result'].includes(pageId);
   document.getElementById('nav-btn-single').style.display = (!onLanding && !onApp) ? '' : 'none';
@@ -1550,7 +1643,476 @@ function renderAchievements(achievements) {
     </div>`).join('');
 }
 
-// ── UTILS ──────────────────────────────────────────────────────────────────
+// ── STEAM WRAPPED ───────────────────────────────────────────────────────────
+
+let wrappedData = null;
+let wrappedSlideIndex = 0;
+let wrappedSlides = [];
+let wrappedSteamId = '';
+
+// Web Audio context for sound effects
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, type = 'sine', duration = 0.15, vol = 0.18) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch {}
+}
+
+function playReveal() {
+  // Ascending chime
+  [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.2, 0.12), i * 60));
+}
+
+function playAdvance() {
+  playTone(660, 'sine', 0.1, 0.08);
+}
+
+function playDrumroll(cb) {
+  // quick drum roll then hit
+  let hits = 0;
+  const roll = setInterval(() => {
+    playTone(80 + Math.random() * 20, 'square', 0.05, 0.15);
+    hits++;
+    if (hits >= 12) { clearInterval(roll); playTone(120, 'square', 0.3, 0.3); if (cb) cb(); }
+  }, 80);
+}
+
+function playComplete() {
+  [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.3, 0.15), i * 80));
+}
+
+// Navigate to wrapped — ask for SteamID first if not in single user mode
+function goToWrapped() {
+  if (currentSteamId) {
+    startWrapped(currentSteamId);
+  } else {
+    // Show steamid page but remember to go to wrapped after
+    wrappedSteamId = '';
+    showPage('page-steamid');
+    // Override launch button temporarily
+    const btn = document.getElementById('page-steamid').querySelector('.go-btn');
+    btn.textContent = 'View Wrapped →';
+    btn.onclick = launchWrappedFromLogin;
+  }
+}
+
+async function launchWrappedFromLogin() {
+  const val = document.getElementById('steamid-input').value.trim();
+  const name = document.getElementById('name-input').value.trim();
+  const errEl = document.getElementById('steamid-error');
+  if (!/^\d{17}$/.test(val)) { errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  // Reset button
+  const btn = document.getElementById('page-steamid').querySelector('.go-btn');
+  btn.textContent = 'Launch'; btn.onclick = launchApp;
+  if (name) { currentSteamId = val; currentDisplayName = name || val; await saveUser(val, name || val); }
+  startWrapped(val);
+}
+
+async function startWrapped(steamId) {
+  wrappedSteamId = steamId;
+  wrappedData = null;
+  wrappedSlideIndex = 0;
+  showPage('page-wrapped-load');
+  document.getElementById('wrapped-spb-fill').style.width = '0%';
+  document.getElementById('wrapped-spb-count').textContent = '';
+  document.getElementById('wrapped-spb-eta').textContent = '';
+  document.getElementById('wrapped-load-msg').textContent = 'Loading your library…';
+
+  const loadStart = Date.now();
+
+  try {
+    // 1. Fetch all owned games
+    document.getElementById('wrapped-load-msg').textContent = 'Loading your library…';
+    document.getElementById('wrapped-spb-fill').style.width = '5%';
+    const games = await (await fetch(`/api/games?steamid=${steamId}`)).json();
+    if (!Array.isArray(games) || !games.length) throw new Error('No games found for this Steam ID.');
+
+    const totalGames = games.length;
+    const playedGames = games.filter(g => g.playtime_forever > 0);
+    const neverPlayed = games.filter(g => !g.playtime_forever || g.playtime_forever === 0);
+    const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
+    const top5 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+    const top3 = top5.slice(0, 3);
+
+    // Most neglected: owned (played at least once), last played ages ago
+    const neglected = playedGames
+      .filter(g => g.rtime_last_played && g.rtime_last_played > 0)
+      .sort((a, b) => (a.rtime_last_played||0) - (b.rtime_last_played||0))[0];
+
+    document.getElementById('wrapped-spb-fill').style.width = '15%';
+    document.getElementById('wrapped-load-msg').textContent = `Fetching achievements for ${top5.length} games…`;
+
+    // 2. Fetch achievements for top 5 games
+    const achResults = [];
+    for (let i = 0; i < top5.length; i++) {
+      const g = top5[i];
+      const pct = 15 + ((i + 1) / top5.length) * 50;
+      document.getElementById('wrapped-spb-fill').style.width = pct + '%';
+      document.getElementById('wrapped-spb-count').textContent = `Game ${i+1} of ${top5.length}`;
+      const elapsed = (Date.now() - loadStart) / 1000;
+      const rate = (i + 1) / elapsed;
+      const rem = Math.ceil((top5.length - i - 1) / rate);
+      document.getElementById('wrapped-spb-eta').textContent = rem > 0 ? `~${rem}s remaining` : '';
+      try {
+        const res = await fetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
+        const data = await res.json();
+        achResults.push({ game: g, ...data });
+      } catch { achResults.push({ game: g, supported: false, achievements: [] }); }
+    }
+
+    // Best completion %
+    const withAch = achResults.filter(r => r.supported && r.achievements?.length);
+    let bestCompletion = null;
+    if (withAch.length) {
+      bestCompletion = withAch.map(r => {
+        const total = r.achievements.length;
+        const unlocked = r.achievements.filter(a => a.achieved).length;
+        return { game: r.game, unlocked, total, pct: total ? Math.round(unlocked/total*100) : 0 };
+      }).sort((a, b) => b.pct - a.pct)[0];
+    }
+
+    // Rarest achievement across top 5 (use global % from achievements data)
+    let rarestAch = null;
+    for (const r of withAch) {
+      for (const a of r.achievements) {
+        if (!a.achieved) continue;
+        // Steam returns global% as a separate call — we'll use a heuristic:
+        // achievements listed later in schema tend to be rarer. Use unlock order as proxy.
+        // For true rarity we'd need /ISteamUserStats/GetGlobalAchievementPercentagesForApp
+        // Let's fetch it for the top 5
+      }
+    }
+
+    // Fetch global achievement percentages for top 5 games to find rarest
+    document.getElementById('wrapped-load-msg').textContent = 'Finding your rarest achievement…';
+    document.getElementById('wrapped-spb-fill').style.width = '70%';
+
+    for (const r of withAch) {
+      try {
+        const res = await fetch(`https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${r.game.appid}`);
+        const data = await res.json();
+        const globalPcts = {};
+        for (const a of (data.achievementpercentages?.achievements || [])) {
+          globalPcts[a.name] = a.percent;
+        }
+        for (const a of r.achievements) {
+          if (!a.achieved) continue;
+          const pct = globalPcts[a.apiname];
+          if (pct !== undefined && (!rarestAch || pct < rarestAch.pct)) {
+            rarestAch = { achievement: a, game: r.game, pct };
+          }
+        }
+      } catch {}
+    }
+
+    document.getElementById('wrapped-spb-fill').style.width = '85%';
+    document.getElementById('wrapped-load-msg').textContent = 'Building your Wrapped…';
+
+    // 3. Genre/tag stats from top 10 most played
+    const top10 = [...games].sort((a,b) => (b.playtime_forever||0)-(a.playtime_forever||0)).slice(0,10);
+    const genreCount = {}, tagCount = {};
+    for (const g of top10) {
+      try {
+        const res = await fetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
+        const d = await res.json();
+        for (const genre of (d.genres||[])) genreCount[genre] = (genreCount[genre]||0) + 1;
+        for (const tag of (d.tags||[]).slice(0,5)) tagCount[tag] = (tagCount[tag]||0) + 1;
+      } catch {}
+    }
+    const topGenre = Object.entries(genreCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+    const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+
+    document.getElementById('wrapped-spb-fill').style.width = '100%';
+    await sleep(300);
+
+    // Build years list from last played timestamps
+    const years = [...new Set(
+      games.filter(g => g.rtime_last_played)
+        .map(g => new Date(g.rtime_last_played * 1000).getFullYear())
+    )].sort((a,b) => b-a);
+
+    wrappedData = { games, totalGames, playedGames, neverPlayed, totalHours, top5, top3, neglected, achResults, withAch, bestCompletion, rarestAch, topGenre, topTag, years, steamId };
+    buildWrappedSlides();
+    showWrappedSlides();
+  } catch (e) {
+    document.getElementById('wrapped-load-msg').textContent = '❌ ' + e.message;
+    document.getElementById('wrapped-spb-fill').style.background = '#e05a4d';
+  }
+}
+
+function buildWrappedSlides() {
+  const d = wrappedData;
+  wrappedSlides = [];
+
+  // Slide 1: Total hours
+  wrappedSlides.push({
+    bg: 'linear-gradient(135deg, #080b10 0%, #0d1a2e 100%)',
+    render: () => `
+      <div class="ws-eyebrow">Your 2024 in gaming</div>
+      <div class="ws-number">${Math.round(d.totalHours).toLocaleString()}</div>
+      <div class="ws-label">Hours Played</div>
+      <div class="ws-sub">That's ${Math.round(d.totalHours/24)} days of your life.<br>Worth every second.</div>`,
+    sound: 'reveal'
+  });
+
+  // Slide 2: Library size
+  wrappedSlides.push({
+    bg: 'linear-gradient(135deg, #080b10 0%, #1a0d2e 100%)',
+    render: () => `
+      <div class="ws-eyebrow">Your collection</div>
+      <div class="ws-number">${d.totalGames}</div>
+      <div class="ws-label">Games Owned</div>
+      <div class="ws-sub">${d.neverPlayed.length} of them have never been launched.<br><em style="color:var(--accent2)">The backlog is real.</em></div>`,
+    sound: 'reveal'
+  });
+
+  // Slide 3: Top game
+  const top = d.top5[0];
+  wrappedSlides.push({
+    bg: 'linear-gradient(135deg, #080b10 0%, #0d2010 100%)',
+    render: () => `
+      <div class="ws-eyebrow">Your #1 game</div>
+      <img class="ws-game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${top.appid}/header.jpg" alt="" />
+      <div class="ws-label">${esc(top.name)}</div>
+      <div class="ws-sub">You played this for <strong style="color:var(--accent)">${fmtH(top.playtime_forever)}</strong></div>
+      <div class="ws-badge">🥇 Your Most Played</div>`,
+    sound: 'drumroll'
+  });
+
+  // Slide 4: Top 3 list
+  wrappedSlides.push({
+    bg: 'linear-gradient(135deg, #080b10 0%, #1a1a0d 100%)',
+    render: () => `
+      <div class="ws-eyebrow">Your top 3</div>
+      <div class="ws-label" style="margin-bottom:16px">Most Played Games</div>
+      <div class="ws-top-list">
+        ${d.top3.map((g, i) => `
+          <div class="ws-top-row">
+            <div class="ws-top-rank ${i===0?'gold':''}">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
+            <img class="ws-top-img" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0"/>
+            <div class="ws-top-name">${esc(g.name)}</div>
+            <div class="ws-top-val">${fmtH(g.playtime_forever)}</div>
+          </div>`).join('')}
+      </div>`,
+    sound: 'reveal'
+  });
+
+  // Slide 5: Best completion
+  if (d.bestCompletion) {
+    const bc = d.bestCompletion;
+    wrappedSlides.push({
+      bg: 'linear-gradient(135deg, #080b10 0%, #0d1a1a 100%)',
+      render: () => `
+        <div class="ws-eyebrow">Achievement hunter</div>
+        <img class="ws-game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${bc.game.appid}/header.jpg" alt="" />
+        <div class="ws-number" style="font-size:72px">${bc.pct}%</div>
+        <div class="ws-label">${esc(bc.game.name)}</div>
+        <div class="ws-sub">${bc.unlocked} of ${bc.total} achievements unlocked</div>`,
+      sound: 'reveal'
+    });
+  }
+
+  // Slide 6: Rarest achievement
+  if (d.rarestAch) {
+    const ra = d.rarestAch;
+    wrappedSlides.push({
+      bg: 'linear-gradient(135deg, #080b10 0%, #1a0d0d 100%)',
+      render: () => `
+        <div class="ws-eyebrow">Your rarest flex</div>
+        ${ra.achievement.icon ? `<img class="ws-ach-icon" src="${ra.achievement.icon}" alt=""/>` : ''}
+        <div class="ws-label">${esc(ra.achievement.displayName || ra.achievement.apiname)}</div>
+        <div class="ws-sub" style="margin-bottom:10px">${esc(ra.game.name)}</div>
+        <div class="ws-badge">🌟 Only ${ra.pct.toFixed(1)}% of players have this</div>`,
+      sound: 'drumroll'
+    });
+  }
+
+  // Slide 7: Top genre/tag
+  if (d.topGenre || d.topTag) {
+    wrappedSlides.push({
+      bg: 'linear-gradient(135deg, #080b10 0%, #0d0d1a 100%)',
+      render: () => `
+        <div class="ws-eyebrow">Your taste</div>
+        ${d.topGenre ? `<div class="ws-number" style="font-size:52px;margin-bottom:8px">${esc(d.topGenre)}</div>` : ''}
+        <div class="ws-label">Your Dominant Genre</div>
+        ${d.topTag ? `<div class="ws-badge" style="margin-top:16px">🏷️ Top Tag: ${esc(d.topTag)}</div>` : ''}`,
+      sound: 'reveal'
+    });
+  }
+
+  // Slide 8: Neglected game
+  if (d.neglected) {
+    const yrs = Math.floor((Date.now() - d.neglected.rtime_last_played * 1000) / (365.25 * 24 * 3600 * 1000));
+    wrappedSlides.push({
+      bg: 'linear-gradient(135deg, #080b10 0%, #1a100d 100%)',
+      render: () => `
+        <div class="ws-eyebrow">The walk of shame</div>
+        <img class="ws-game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${d.neglected.appid}/header.jpg" alt="" onerror="this.style.opacity=.4"/>
+        <div class="ws-label">${esc(d.neglected.name)}</div>
+        <div class="ws-sub">Last played <strong style="color:var(--accent2)">${yrs > 0 ? yrs + ' year' + (yrs>1?'s':'') : 'a long time'} ago</strong><br>It misses you.</div>`,
+      sound: 'reveal'
+    });
+  }
+
+  // Final slide
+  wrappedSlides.push({
+    bg: 'linear-gradient(135deg, #080b10 0%, #0d1428 100%)',
+    render: () => `
+      <div class="ws-eyebrow">That's a wrap</div>
+      <div class="ws-number" style="font-size:64px">GG</div>
+      <div class="ws-label">See you next year</div>
+      <div class="ws-sub" style="margin-bottom:24px">${Math.round(d.totalHours).toLocaleString()} hours well spent.</div>
+      <button onclick="showWrappedSummary()" style="background:linear-gradient(135deg,#1b6eb5,var(--accent));border:none;border-radius:var(--radius);color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;padding:14px 32px;cursor:pointer;text-transform:uppercase;box-shadow:0 0 30px rgba(77,157,224,0.3)">View Full Summary →</button>`,
+    sound: 'complete'
+  });
+}
+
+function showWrappedSlides() {
+  const container = document.getElementById('wrapped-slides-container');
+  const dotsEl = document.getElementById('ws-dots');
+  container.innerHTML = wrappedSlides.map((s, i) => `
+    <div class="wrapped-slide ${i===0?'active':''}" id="ws-slide-${i}" style="background:${s.bg}">
+      ${s.render()}
+    </div>`).join('');
+  dotsEl.innerHTML = wrappedSlides.map((_, i) => `<div class="ws-dot ${i===0?'active':''}" id="ws-dot-${i}"></div>`).join('');
+  wrappedSlideIndex = 0;
+  showPage('page-wrapped-slides');
+  document.getElementById('page-wrapped-slides').focus();
+  // Play first slide sound
+  const slide = wrappedSlides[0];
+  if (slide.sound === 'reveal') setTimeout(playReveal, 400);
+  else if (slide.sound === 'drumroll') setTimeout(() => playDrumroll(), 200);
+  else if (slide.sound === 'complete') setTimeout(playComplete, 300);
+}
+
+function nextWrappedSlide() {
+  if (wrappedSlideIndex >= wrappedSlides.length - 1) return;
+  playAdvance();
+  const curr = document.getElementById(`ws-slide-${wrappedSlideIndex}`);
+  curr.classList.remove('active'); curr.classList.add('exit');
+  setTimeout(() => curr.classList.remove('exit'), 500);
+  wrappedSlideIndex++;
+  const next = document.getElementById(`ws-slide-${wrappedSlideIndex}`);
+  next.classList.add('active');
+  // Update dots
+  document.querySelectorAll('.ws-dot').forEach((d, i) => d.classList.toggle('active', i === wrappedSlideIndex));
+  // Hide hint after first tap
+  document.getElementById('ws-hint').style.display = 'none';
+  // Play sound
+  const slide = wrappedSlides[wrappedSlideIndex];
+  if (slide.sound === 'reveal') setTimeout(playReveal, 300);
+  else if (slide.sound === 'drumroll') setTimeout(() => playDrumroll(), 100);
+  else if (slide.sound === 'complete') setTimeout(playComplete, 200);
+  // Last slide
+  if (wrappedSlideIndex === wrappedSlides.length - 1) {
+    document.getElementById('ws-hint').style.display = 'none';
+  }
+}
+
+function showWrappedSummary() {
+  const d = wrappedData;
+  const years = ['All Time', ...d.years.map(String)];
+  let activeYear = 'All Time';
+  const inner = document.getElementById('wrapped-summary-inner');
+
+  function getFilteredGames(year) {
+    if (year === 'All Time') return d.games;
+    const y = parseInt(year);
+    return d.games.filter(g => g.rtime_last_played && new Date(g.rtime_last_played * 1000).getFullYear() === y);
+  }
+
+  function renderSummary(year) {
+    const games = getFilteredGames(year);
+    const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
+    const top5 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+    const played = games.filter(g => g.playtime_forever > 0).length;
+    const never = games.filter(g => !g.playtime_forever).length;
+
+    inner.innerHTML = `
+      <div class="wrapped-summary-hero">
+        <h1>Steam Wrapped</h1>
+        <div class="wsh-sub">${year === 'All Time' ? 'All time stats' : `Your ${year} in gaming`} · ${d.steamId}</div>
+      </div>
+      <div class="wrapped-year-tabs">
+        ${years.map(y => `<button class="wrapped-year-tab ${y===year?'active':''}" onclick="(${renderSummary.toString()})('${y}')">${y}</button>`).join('')}
+      </div>
+      <div class="wrapped-grid">
+        <div class="wrapped-stat-card featured">
+          <div class="wsc-label">Total Playtime</div>
+          <div class="wsc-value">${Math.round(totalHours).toLocaleString()}h</div>
+          <div class="wsc-sub">${Math.round(totalHours / 24)} days · ${played} games played</div>
+        </div>
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Library Size</div>
+          <div class="wsc-value">${games.length}</div>
+          <div class="wsc-sub">${never} never launched</div>
+        </div>
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Most Played</div>
+          <div class="wsc-value" style="font-size:18px;margin-bottom:8px">${top5[0] ? esc(top5[0].name) : '—'}</div>
+          <div class="wsc-sub">${top5[0] ? fmtH(top5[0].playtime_forever) : ''}</div>
+        </div>
+        ${d.bestCompletion ? `
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Best Completion</div>
+          <div class="wsc-value">${d.bestCompletion.pct}%</div>
+          <div class="wsc-sub">${esc(d.bestCompletion.game.name)}<br>${d.bestCompletion.unlocked}/${d.bestCompletion.total} achievements</div>
+        </div>` : ''}
+        ${d.rarestAch ? `
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Rarest Achievement</div>
+          <div class="wsc-value" style="font-size:14px;margin-bottom:8px">${esc(d.rarestAch.achievement.displayName || d.rarestAch.achievement.apiname)}</div>
+          <div class="wsc-sub">${esc(d.rarestAch.game.name)}<br>Only ${d.rarestAch.pct.toFixed(1)}% of players have this</div>
+        </div>` : ''}
+        ${d.topGenre ? `
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Top Genre</div>
+          <div class="wsc-value" style="font-size:20px">${esc(d.topGenre)}</div>
+          <div class="wsc-sub">${d.topTag ? `Top tag: ${esc(d.topTag)}` : ''}</div>
+        </div>` : ''}
+        ${d.neglected ? `
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Most Neglected</div>
+          <div class="wsc-value" style="font-size:14px;margin-bottom:8px">${esc(d.neglected.name)}</div>
+          <div class="wsc-sub">Last played ${fmtDate2(d.neglected.rtime_last_played)}</div>
+        </div>` : ''}
+        <div class="wrapped-stat-card" style="grid-column:1/-1">
+          <div class="wsc-label">Top 5 Most Played</div>
+          <div class="wrapped-top-games" style="margin-top:12px">
+            ${top5.map((g, i) => `
+              <div class="ws-top-row">
+                <div class="ws-top-rank ${i===0?'gold':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+                <img class="ws-top-img" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0"/>
+                <div class="ws-top-name">${esc(g.name)}</div>
+                <div class="ws-top-val">${fmtH(g.playtime_forever)}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:40px">
+        <button onclick="showPage('page-wrapped-slides')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px 24px;border-radius:var(--radius);cursor:pointer;margin-right:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">← Back to Slides</button>
+        <button onclick="goHome()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px 24px;border-radius:var(--radius);cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Home</button>
+      </div>`;
+    activeYear = year;
+  }
+
+  renderSummary('All Time');
+  showPage('page-wrapped-summary');
+  playComplete();
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fmtH(m){return m?(m/60).toFixed(1)+'h':'0h';}
 function fmtDate(ts){return new Date(ts*1000).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
