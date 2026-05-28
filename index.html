@@ -20,23 +20,64 @@
   .page { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; transition: opacity .4s ease, transform .4s ease; }
   .page.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
 
+  /* UNIVERSAL NAV BAR */
+  .global-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 52px; background: rgba(8,11,16,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 12px;
+  }
+  .global-nav .nav-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; }
+  .global-nav .nav-logo svg { width: 22px; height: 22px; flex-shrink: 0; }
+  .global-nav .nav-logo span { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; color: #fff; }
+  .global-nav .nav-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .global-nav .nav-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 12px; letter-spacing: .5px; padding: 5px 14px; border-radius: var(--radius); cursor: pointer; transition: all .2s; white-space: nowrap; }
+  .global-nav .nav-btn:hover { color: var(--text); border-color: var(--accent); }
+  .global-nav .nav-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
+  .global-nav .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .global-nav .nav-user-pill { background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 3px 12px; font-size: 11px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--accent); display: none; }
+  .global-nav .nav-games-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 10px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); display: none; }
+
+  /* pages need top padding for nav bar */
+  .page { padding-top: 52px; }
+  #page-app { padding-top: 0; } /* app has its own header */
+
   /* LANDING */
-  #page-landing .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; animation: fadeDown .6s ease both; }
+  #page-landing { justify-content: center; overflow-y: auto; }
+  #page-landing .landing-inner { display: flex; flex-direction: column; align-items: center; padding: 20px 0 40px; }
+  #page-landing .logo { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; animation: fadeDown .6s ease both; }
   #page-landing .logo svg { width: 52px; height: 52px; }
   #page-landing h1 { font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 900; letter-spacing: 4px; color: #fff; text-transform: uppercase; }
-  #page-landing .subtitle { font-size: 13px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 60px; animation: fadeDown .6s .1s ease both; }
+  #page-landing .subtitle { font-size: 13px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 48px; animation: fadeDown .6s .1s ease both; }
+
+  /* top-level mode cards */
   .mode-label { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 20px; animation: fadeDown .6s .2s ease both; }
-  .mode-cards { display: flex; gap: 20px; animation: fadeDown .6s .3s ease both; }
-  .mode-card { width: 220px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 28px 24px; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; text-align: center; position: relative; overflow: hidden; }
+  .mode-cards { display: flex; gap: 20px; align-items: flex-start; animation: fadeDown .6s .3s ease both; }
+  .mode-col { display: flex; flex-direction: column; width: 220px; }
+  .mode-card { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 28px 24px; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; text-align: center; position: relative; overflow: hidden; }
   .mode-card::before { content: ''; position: absolute; inset: 0; background: var(--accent-glow); opacity: 0; transition: opacity .2s; }
   .mode-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(77,157,224,0.15); }
   .mode-card:hover::before { opacity: 1; }
+  .mode-card.active-mode { border-color: var(--accent); background: rgba(77,157,224,0.06); transform: none; box-shadow: 0 0 20px rgba(77,157,224,0.1); }
   .mode-card .icon { font-size: 36px; margin-bottom: 14px; display: block; }
   .mode-card .title { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; color: #fff; text-transform: uppercase; margin-bottom: 8px; }
   .mode-card .desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
 
-  .back-btn { position: fixed; top: 24px; left: 28px; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 13px; letter-spacing: 1px; padding: 8px 16px; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .2s; z-index: 10; }
-  .back-btn:hover { color: var(--text); border-color: var(--accent); }
+  /* sub-mode cards that slide in below each parent */
+  .sub-modes-wrap { overflow: hidden; max-height: 0; opacity: 0; transition: max-height .45s cubic-bezier(0.4,0,0.2,1), opacity .3s ease, margin .3s ease; margin-top: 0; width: 220px; }
+  .sub-modes-wrap.open { max-height: 600px; opacity: 1; margin-top: 12px; }
+  .sub-mode-cards { display: flex; flex-direction: column; gap: 10px; }
+  .sub-mode-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; text-align: center; position: relative; overflow: hidden; }
+  .sub-mode-card::before { content: ''; position: absolute; inset: 0; background: var(--accent-glow); opacity: 0; transition: opacity .2s; }
+  .sub-mode-card:hover { border-color: var(--accent); transform: translateX(3px); box-shadow: 0 4px 20px rgba(77,157,224,0.1); }
+  .sub-mode-card:hover::before { opacity: 1; }
+  .sub-mode-card.soon { opacity: .4; cursor: not-allowed; }
+  .sub-mode-card.soon:hover { transform: none; box-shadow: none; border-color: var(--border); }
+  .sub-mode-card.soon:hover::before { opacity: 0; }
+  .sub-mode-card .icon { font-size: 22px; margin-bottom: 6px; display: block; }
+  .sub-mode-card .title { font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #fff; text-transform: uppercase; margin-bottom: 4px; }
+  .sub-mode-card .desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .sub-mode-card .soon-badge { display: inline-block; margin-top: 6px; font-size: 9px; letter-spacing: 2px; color: var(--accent2); background: rgba(224,125,77,0.1); border: 1px solid rgba(224,125,77,0.3); border-radius: 20px; padding: 2px 8px; text-transform: uppercase; }
 
   /* STEAMID */
   #page-steamid { gap: 0; }
@@ -75,12 +116,13 @@
   /* MAIN APP */
   #page-app { position: fixed; inset: 0; flex-direction: column; z-index: 1; align-items: stretch; justify-content: flex-start; }
   ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
-  .app-header { background: linear-gradient(180deg, #0a0d14 0%, transparent 100%); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-  .app-header svg { width: 28px; height: 28px; flex-shrink: 0; }
-  .app-header .app-title { font-family: 'Orbitron', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 3px; color: #fff; }
-  .app-header .user-pill { margin-left: 12px; background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--accent); }
-  .app-header .games-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 11px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); }
-  .app-header .change-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 12px; letter-spacing: 1px; padding: 6px 14px; border-radius: var(--radius); cursor: pointer; transition: all .2s; }
+  .app-header { background: linear-gradient(180deg, #0a0d14 0%, rgba(8,11,16,0) 100%); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .app-header svg { width: 24px; height: 24px; flex-shrink: 0; cursor: pointer; opacity: .6; transition: opacity .2s; }
+  .app-header svg:hover { opacity: 1; }
+  .app-header .app-title { font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 2px; color: #fff; }
+  .app-header .user-pill { margin-left: 4px; background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 3px 12px; font-size: 11px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--accent); }
+  .app-header .games-pill { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 10px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); }
+  .app-header .change-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 12px; letter-spacing: 1px; padding: 5px 12px; border-radius: var(--radius); cursor: pointer; transition: all .2s; }
   .app-header .change-btn:hover { color: var(--text); border-color: var(--accent); }
   .app-layout { display: grid; grid-template-columns: 300px 1fr; flex: 1; overflow: hidden; height: calc(100vh - 57px); }
   .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
@@ -266,31 +308,94 @@
 </head>
 <body>
 
+<!-- UNIVERSAL NAV BAR (on every page) -->
+<nav class="global-nav" id="global-nav">
+  <a class="nav-logo" onclick="goHome()" href="#">
+    <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
+    <span>Steam Tracker</span>
+  </a>
+  <div class="nav-divider"></div>
+  <button class="nav-btn" id="nav-btn-single" onclick="goToSingle()" style="display:none">🎮 Single User</button>
+  <button class="nav-btn" id="nav-btn-group" onclick="goToGroup()" style="display:none">👥 Group</button>
+  <div class="nav-right">
+    <span class="nav-user-pill" id="nav-user-pill"></span>
+    <span class="nav-games-pill" id="nav-games-pill"></span>
+    <button class="nav-btn" id="nav-change-user" onclick="goBack('page-steamid')" style="display:none">Change User</button>
+  </div>
+</nav>
+
 <!-- LANDING -->
 <div class="page" id="page-landing">
-  <div class="logo">
-    <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
-    <h1>Steam Tracker</h1>
-  </div>
-  <div class="subtitle">Achievement Explorer</div>
-  <div class="mode-label">Select Mode</div>
-  <div class="mode-cards">
-    <div class="mode-card" onclick="goToSingle()">
-      <span class="icon">🎮</span>
-      <div class="title">Single User</div>
-      <div class="desc">Browse achievements for your own Steam account</div>
+  <div class="landing-inner">
+    <div class="logo">
+      <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
+      <h1>Steam Tracker</h1>
     </div>
-    <div class="mode-card" onclick="goToGroup()">
-      <span class="icon">👥</span>
-      <div class="title">Group</div>
-      <div class="desc">Pick a random game from your shared library by tag</div>
+    <div class="subtitle">Achievement Explorer</div>
+    <div class="mode-label">Select Mode</div>
+    <div class="mode-cards">
+      <div class="mode-col">
+        <div class="mode-card" id="mc-single" onclick="toggleSubModes('single')">
+          <span class="icon">🎮</span>
+          <div class="title">Single User</div>
+          <div class="desc">Your library, achievements & stats</div>
+        </div>
+        <div class="sub-modes-wrap" id="sub-single">
+          <div class="sub-mode-cards">
+            <div class="sub-mode-card" onclick="goToSingle()">
+              <span class="icon">🏅</span>
+              <div class="title">Achievements</div>
+              <div class="desc">Browse your game library and track achievement progress</div>
+            </div>
+            <div class="sub-mode-card soon">
+              <span class="icon">📊</span>
+              <div class="title">Library Stats</div>
+              <div class="desc">Your playtime, completion rate & gaming wrapped</div>
+              <span class="soon-badge">Coming Soon</span>
+            </div>
+            <div class="sub-mode-card soon">
+              <span class="icon">🎯</span>
+              <div class="title">Backlog Buster</div>
+              <div class="desc">Roll a random unplayed game from your backlog</div>
+              <span class="soon-badge">Coming Soon</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mode-col">
+        <div class="mode-card" id="mc-group" onclick="toggleSubModes('group')">
+          <span class="icon">👥</span>
+          <div class="title">Group</div>
+          <div class="desc">Play together — pick games & compete</div>
+        </div>
+        <div class="sub-modes-wrap" id="sub-group">
+          <div class="sub-mode-cards">
+            <div class="sub-mode-card" onclick="goToGroup()">
+              <span class="icon">🎲</span>
+              <div class="title">Game Picker</div>
+              <div class="desc">Roll a random shared game filtered by tag</div>
+            </div>
+            <div class="sub-mode-card soon">
+              <span class="icon">🏆</span>
+              <div class="title">Achievement Race</div>
+              <div class="desc">Compete to unlock the most achievements in a game</div>
+              <span class="soon-badge">Coming Soon</span>
+            </div>
+            <div class="sub-mode-card soon">
+              <span class="icon">👻</span>
+              <div class="title">Ghost Games</div>
+              <div class="desc">Games you both own but haven't touched in ages</div>
+              <span class="soon-badge">Coming Soon</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- SINGLE USER LOGIN -->
 <div class="page hidden" id="page-steamid">
-  <button class="back-btn" onclick="goBack('page-landing')">← Back</button>
   <div class="login-layout">
     <div class="input-box">
       <div class="step-tag">Single User Mode</div>
@@ -314,7 +419,7 @@
 <!-- SINGLE USER APP -->
 <div class="page hidden" id="page-app">
   <div class="app-header">
-    <svg viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
+    <svg viewBox="0 0 52 52" fill="none" onclick="goHome()" title="Home"><circle cx="26" cy="26" r="24" stroke="#4d9de0" stroke-width="1.5"/><path d="M26 6C16.06 6 8 14.06 8 24c0 7.18 4.19 13.42 10.28 16.52l5.1-11.97a5.5 5.5 0 1 1 7.56-6.94l12.1-5.15C40.95 10.16 33.97 6 26 6z" fill="#4d9de0" opacity=".85"/></svg>
     <span class="app-title">Steam Tracker</span>
     <span class="user-pill" id="active-user-label"></span>
     <span class="games-pill" id="games-count-label" style="display:none"></span>
@@ -336,7 +441,6 @@
 
 <!-- GROUP USER SELECT -->
 <div class="page hidden" id="page-group">
-  <button class="back-btn" onclick="goBack('page-landing')">← Home</button>
   <div style="text-align:center;width:700px;max-width:95vw">
     <div class="group-header-tag">Group Mode</div>
     <div class="group-title">Who's Playing?</div>
@@ -350,16 +454,6 @@
 <!-- GROUP TAG PICKER -->
 <div class="page hidden" id="page-group-picker">
   <div class="gp-wrap">
-
-    <!-- top bar: nav + title -->
-    <div class="gp-topbar">
-      <div style="display:flex;gap:10px">
-        <button class="gp-nav-btn" onclick="goBack('page-landing')">⬡ Home</button>
-        <button class="gp-nav-btn" onclick="goBack('page-group')">← Change Players</button>
-      </div>
-      <div class="gp-topbar-title">Group Picker</div>
-    </div>
-
     <!-- stats row: count box + members box -->
     <div class="gp-stats-row">
       <div class="gp-count-box">
@@ -441,7 +535,6 @@
 
 <!-- RESULT -->
 <div class="page hidden" id="page-result">
-  <button class="back-btn" onclick="goBack('page-group-picker')">← Pick Again</button>
   <div class="result-wrap" id="result-wrap"></div>
 </div>
 
@@ -460,9 +553,62 @@ let scanStartTime = 0;
 // ── NAV ────────────────────────────────────────────────────────────────────
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('hidden', p.id !== id));
+  updateNav(id);
   if (id === 'page-steamid') loadSavedUsers();
   if (id === 'page-group') loadGroupUsers();
 }
+
+function updateNav(pageId) {
+  // Show/hide nav buttons based on current page
+  const onLanding = pageId === 'page-landing';
+  const onApp = pageId === 'page-app';
+  const onSingle = ['page-steamid','page-app'].includes(pageId);
+  const onGroup = ['page-group','page-group-picker','page-roll','page-result'].includes(pageId);
+
+  document.getElementById('nav-btn-single').style.display = (!onLanding && !onApp) ? '' : 'none';
+  document.getElementById('nav-btn-group').style.display = (!onLanding && !onApp) ? '' : 'none';
+  document.getElementById('nav-change-user').style.display = onApp ? '' : 'none';
+
+  // Highlight active mode
+  document.getElementById('nav-btn-single').classList.toggle('active', onSingle);
+  document.getElementById('nav-btn-group').classList.toggle('active', onGroup);
+
+  // Show user pill on app pages
+  const showUser = onApp && currentDisplayName;
+  document.getElementById('nav-user-pill').style.display = showUser ? '' : 'none';
+  document.getElementById('nav-games-pill').style.display = (onApp && allGames.length) ? '' : 'none';
+}
+
+function goHome() {
+  // Reset sub-mode panels
+  document.getElementById('sub-single').classList.remove('open');
+  document.getElementById('sub-group').classList.remove('open');
+  document.getElementById('mc-single').classList.remove('active-mode');
+  document.getElementById('mc-group').classList.remove('active-mode');
+  showPage('page-landing');
+}
+
+function toggleSubModes(which) {
+  const singleWrap = document.getElementById('sub-single');
+  const groupWrap = document.getElementById('sub-group');
+  const mcSingle = document.getElementById('mc-single');
+  const mcGroup = document.getElementById('mc-group');
+
+  if (which === 'single') {
+    const isOpen = singleWrap.classList.contains('open');
+    singleWrap.classList.toggle('open', !isOpen);
+    groupWrap.classList.remove('open');
+    mcSingle.classList.toggle('active-mode', !isOpen);
+    mcGroup.classList.remove('active-mode');
+  } else {
+    const isOpen = groupWrap.classList.contains('open');
+    groupWrap.classList.toggle('open', !isOpen);
+    singleWrap.classList.remove('open');
+    mcGroup.classList.toggle('active-mode', !isOpen);
+    mcSingle.classList.remove('active-mode');
+  }
+}
+
 function goBack(p) { showPage(p); }
 function goToSingle() { showPage('page-steamid'); }
 function goToGroup() { showPage('page-group'); }
@@ -813,6 +959,8 @@ async function launchApp() {
   currentSteamId = val; currentDisplayName = name || val;
   await saveUser(currentSteamId, currentDisplayName);
   document.getElementById('active-user-label').textContent = currentDisplayName;
+  document.getElementById('nav-user-pill').textContent = currentDisplayName;
+  document.getElementById('nav-user-pill').style.display = '';
   document.getElementById('games-count-label').style.display = 'none';
   showPage('page-app');
   allGames = []; activeAppId = null; cachedAchievements = {};
@@ -831,6 +979,9 @@ function renderSidebar(games) {
   const list = document.getElementById('game-list');
   const countEl = document.getElementById('games-count-label');
   if (countEl && allGames.length) { countEl.textContent = allGames.length+' games'; countEl.style.display=''; }
+  // sync nav pill too
+  const navGames = document.getElementById('nav-games-pill');
+  if (navGames && allGames.length) { navGames.textContent = allGames.length+' games'; navGames.style.display=''; }
   if (!games.length) { list.innerHTML = '<div class="sidebar-msg">No games found.</div>'; return; }
   list.innerHTML = games.map(g => `
     <div class="game-item" data-appid="${g.appid}" onclick="loadGame(${g.appid},this)">
