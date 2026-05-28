@@ -102,7 +102,7 @@
   /* SAVED USERS */
   .saved-users-panel { background: var(--surface); border: 1px solid var(--border-bright); border-radius: 14px; padding: 28px 24px; width: 260px; min-height: 200px; max-height: 520px; display: flex; flex-direction: column; }
   .saved-users-panel h3 { font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; flex-shrink: 0; }
-  .saved-users-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .saved-users-list { overflow-y: auto; overflow-x: visible; flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 4px 2px; }
   .saved-user-row { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; transition: border-color .15s, transform .15s; }
   .saved-user-row:hover { border-color: var(--accent); transform: translateY(-1px); }
   .saved-user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #1b6eb5, var(--accent)); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
@@ -673,6 +673,7 @@ async function loadSavedUsers() {
   list.innerHTML = '<div class="saved-users-empty">Loading…</div>';
   try {
     const users = await (await fetch('/api/users')).json();
+    users.sort((a, b) => a.displayName.localeCompare(b.displayName));
     if (!users.length) { list.innerHTML = '<div class="saved-users-empty">No saved users yet.</div>'; return; }
     list.innerHTML = users.map(u => `
       <div class="saved-user-row" onclick="selectSavedUser('${esc(u.steamId)}','${esc(u.displayName)}')">
@@ -698,6 +699,7 @@ async function loadGroupUsers() {
   grid.innerHTML = '<div class="saved-users-empty">Loading…</div>';
   try {
     groupUsers = await (await fetch('/api/users')).json();
+    groupUsers.sort((a, b) => a.displayName.localeCompare(b.displayName));
     if (!groupUsers.length) { grid.innerHTML = '<div class="saved-users-empty">No saved users. Add accounts in Single User mode first.</div>'; return; }
     renderGroupUserGrid();
   } catch { grid.innerHTML = '<div class="saved-users-empty">Could not load users.</div>'; }
