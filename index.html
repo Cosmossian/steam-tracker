@@ -868,7 +868,7 @@ function updateNav(pageId) {
   // Show/hide nav buttons based on current page
   const onLanding = pageId === 'page-landing';
   const onApp = pageId === 'page-app';
-  const onSingle = ['page-steamid','page-app'].includes(pageId);
+  const onSingle = ['page-steamid'].includes(pageId); // app has its own header
   const onGroup = ['page-group','page-group-picker','page-roll','page-result'].includes(pageId);
   const onWrapped = ['page-wrapped-load','page-wrapped-slides','page-wrapped-summary'].includes(pageId);
 
@@ -896,6 +896,10 @@ function goHome() {
   document.getElementById('sub-group').classList.remove('open');
   document.getElementById('mc-single').classList.remove('active-mode');
   document.getElementById('mc-group').classList.remove('active-mode');
+  // Clear wrapped state so it doesn't bleed back
+  wrappedData = null;
+  wrappedSlides = [];
+  wrappedSlideIndex = 0;
   showPage('page-landing');
 }
 
@@ -1735,36 +1739,51 @@ async function startWrapped(steamId) {
 
   try {
     // 1. Fetch all owned games
-    document.getElementById('wrapped-load-msg').textContent = 'Loading your library…';
     document.getElementById('wrapped-spb-fill').style.width = '5%';
     const games = await (await fetch(`/api/games?steamid=${steamId}`)).json();
     if (!Array.isArray(games) || !games.length) throw new Error('No games found for this Steam ID.');
 
+    // All-time stats
     const totalGames = games.length;
     const playedGames = games.filter(g => g.playtime_forever > 0);
     const neverPlayed = games.filter(g => !g.playtime_forever || g.playtime_forever === 0);
     const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
-    const top5 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
-    const top3 = top5.slice(0, 3);
+    const allTimeTop5 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
 
-    // Most neglected: owned (played at least once), last played ages ago
+    // Most neglected all-time
     const neglected = playedGames
       .filter(g => g.rtime_last_played && g.rtime_last_played > 0)
       .sort((a, b) => (a.rtime_last_played||0) - (b.rtime_last_played||0))[0];
 
-    document.getElementById('wrapped-spb-fill').style.width = '15%';
-    document.getElementById('wrapped-load-msg').textContent = `Fetching achievements for ${top5.length} games…`;
+    // Build years list from last played timestamps
+    const years = [...new Set(
+      games.filter(g => g.rtime_last_played)
+        .map(g => new Date(g.rtime_last_played * 1000).getFullYear())
+    )].sort((a,b) => b-a);
 
-    // 2. Fetch achievements for top 5 games
+    // Per-year stats (playtime_forever is all-time but we can show games played per year)
+    // Games "played in year X" = rtime_last_played falls in that year
+    const yearStats = {};
+    for (const year of years) {
+      const yGames = games.filter(g => g.rtime_last_played && new Date(g.rtime_last_played * 1000).getFullYear() === year);
+      const yHours = yGames.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
+      const yTop5 = [...yGames].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+      const yNeglected = yGames.filter(g => g.playtime_forever > 0).sort((a,b) => (a.rtime_last_played||0)-(b.rtime_last_played||0))[0];
+      yearStats[year] = { games: yGames, hours: yHours, top5: yTop5, neglected: yNeglected };
+    }
+
+    // 2. Fetch achievements for top 5 ALL-TIME most played games only
+    document.getElementById('wrapped-spb-fill').style.width = '15%';
+    document.getElementById('wrapped-load-msg').textContent = `Fetching achievements for top 5 games…`;
+
     const achResults = [];
-    for (let i = 0; i < top5.length; i++) {
-      const g = top5[i];
-      const pct = 15 + ((i + 1) / top5.length) * 50;
-      document.getElementById('wrapped-spb-fill').style.width = pct + '%';
-      document.getElementById('wrapped-spb-count').textContent = `Game ${i+1} of ${top5.length}`;
+    for (let i = 0; i < allTimeTop5.length; i++) {
+      const g = allTimeTop5[i];
+      document.getElementById('wrapped-spb-fill').style.width = (15 + ((i + 1) / allTimeTop5.length) * 40) + '%';
+      document.getElementById('wrapped-spb-count').textContent = `Achievement data: game ${i+1} of ${allTimeTop5.length}`;
       const elapsed = (Date.now() - loadStart) / 1000;
-      const rate = (i + 1) / elapsed;
-      const rem = Math.ceil((top5.length - i - 1) / rate);
+      const rate = (i + 1) / Math.max(elapsed, 0.1);
+      const rem = Math.ceil((allTimeTop5.length - i - 1) / rate);
       document.getElementById('wrapped-spb-eta').textContent = rem > 0 ? `~${rem}s remaining` : '';
       try {
         const res = await fetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
@@ -1773,7 +1792,7 @@ async function startWrapped(steamId) {
       } catch { achResults.push({ game: g, supported: false, achievements: [] }); }
     }
 
-    // Best completion %
+    // Best completion % across top 5
     const withAch = achResults.filter(r => r.supported && r.achievements?.length);
     let bestCompletion = null;
     if (withAch.length) {
@@ -1784,30 +1803,16 @@ async function startWrapped(steamId) {
       }).sort((a, b) => b.pct - a.pct)[0];
     }
 
-    // Rarest achievement across top 5 (use global % from achievements data)
-    let rarestAch = null;
-    for (const r of withAch) {
-      for (const a of r.achievements) {
-        if (!a.achieved) continue;
-        // Steam returns global% as a separate call — we'll use a heuristic:
-        // achievements listed later in schema tend to be rarer. Use unlock order as proxy.
-        // For true rarity we'd need /ISteamUserStats/GetGlobalAchievementPercentagesForApp
-        // Let's fetch it for the top 5
-      }
-    }
-
-    // Fetch global achievement percentages for top 5 games to find rarest
+    // 3. Rarest achievement — fetch global % for top 5 only
     document.getElementById('wrapped-load-msg').textContent = 'Finding your rarest achievement…';
-    document.getElementById('wrapped-spb-fill').style.width = '70%';
-
+    document.getElementById('wrapped-spb-fill').style.width = '60%';
+    let rarestAch = null;
     for (const r of withAch) {
       try {
         const res = await fetch(`https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${r.game.appid}`);
         const data = await res.json();
         const globalPcts = {};
-        for (const a of (data.achievementpercentages?.achievements || [])) {
-          globalPcts[a.name] = a.percent;
-        }
+        for (const a of (data.achievementpercentages?.achievements || [])) globalPcts[a.name] = a.percent;
         for (const a of r.achievements) {
           if (!a.achieved) continue;
           const pct = globalPcts[a.apiname];
@@ -1818,19 +1823,13 @@ async function startWrapped(steamId) {
       } catch {}
     }
 
-    document.getElementById('wrapped-spb-fill').style.width = '85%';
-    document.getElementById('wrapped-load-msg').textContent = 'Building your Wrapped…';
-
-    // 3. Genre/tag stats from top 10 most played
-    const top10 = [...games].sort((a,b) => (b.playtime_forever||0)-(a.playtime_forever||0)).slice(0,10);
+    // 4. Genre/tag stats — use genres already returned from achResults (no extra calls)
+    document.getElementById('wrapped-load-msg').textContent = 'Calculating your taste…';
+    document.getElementById('wrapped-spb-fill').style.width = '80%';
     const genreCount = {}, tagCount = {};
-    for (const g of top10) {
-      try {
-        const res = await fetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
-        const d = await res.json();
-        for (const genre of (d.genres||[])) genreCount[genre] = (genreCount[genre]||0) + 1;
-        for (const tag of (d.tags||[]).slice(0,5)) tagCount[tag] = (tagCount[tag]||0) + 1;
-      } catch {}
+    for (const r of achResults) {
+      for (const genre of (r.genres||[])) genreCount[genre] = (genreCount[genre]||0) + 1;
+      for (const tag of (r.tags||[]).slice(0,5)) tagCount[tag] = (tagCount[tag]||0) + 1;
     }
     const topGenre = Object.entries(genreCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
     const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
@@ -1838,13 +1837,12 @@ async function startWrapped(steamId) {
     document.getElementById('wrapped-spb-fill').style.width = '100%';
     await sleep(300);
 
-    // Build years list from last played timestamps
-    const years = [...new Set(
-      games.filter(g => g.rtime_last_played)
-        .map(g => new Date(g.rtime_last_played * 1000).getFullYear())
-    )].sort((a,b) => b-a);
-
-    wrappedData = { games, totalGames, playedGames, neverPlayed, totalHours, top5, top3, neglected, achResults, withAch, bestCompletion, rarestAch, topGenre, topTag, years, steamId };
+    wrappedData = {
+      games, totalGames, playedGames, neverPlayed, totalHours,
+      top5: allTimeTop5, top3: allTimeTop5.slice(0,3), neglected,
+      achResults, withAch, bestCompletion, rarestAch,
+      topGenre, topTag, years, yearStats, steamId
+    };
     buildWrappedSlides();
     showWrappedSlides();
   } catch (e) {
@@ -2030,67 +2028,72 @@ function showWrappedSummary() {
 
   function getFilteredGames(year) {
     if (year === 'All Time') return d.games;
-    const y = parseInt(year);
-    return d.games.filter(g => g.rtime_last_played && new Date(g.rtime_last_played * 1000).getFullYear() === y);
+    return d.yearStats[year]?.games || [];
   }
 
   function renderSummary(year) {
-    const games = getFilteredGames(year);
-    const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
-    const top5 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+    const isAllTime = year === 'All Time';
+    const games = isAllTime ? d.games : (d.yearStats[year]?.games || []);
+    const totalHours = isAllTime ? d.totalHours : (d.yearStats[year]?.hours || 0);
+    const top5 = isAllTime ? d.top5 : (d.yearStats[year]?.top5 || []);
     const played = games.filter(g => g.playtime_forever > 0).length;
-    const never = games.filter(g => !g.playtime_forever).length;
+    const never = isAllTime ? d.neverPlayed.length : 0;
+    const yearNeglected = isAllTime ? d.neglected : (d.yearStats[year]?.neglected || null);
 
     inner.innerHTML = `
       <div class="wrapped-summary-hero">
         <h1>Steam Wrapped</h1>
-        <div class="wsh-sub">${year === 'All Time' ? 'All time stats' : `Your ${year} in gaming`} · ${d.steamId}</div>
+        <div class="wsh-sub">${isAllTime ? 'All time stats' : `Your ${year} in gaming`} · ${d.steamId}</div>
       </div>
       <div class="wrapped-year-tabs">
-        ${years.map(y => `<button class="wrapped-year-tab ${y===year?'active':''}" onclick="(${renderSummary.toString()})('${y}')">${y}</button>`).join('')}
+        ${years.map(y => `<button class="wrapped-year-tab ${y===year?'active':''}" onclick="wrappedRenderYear('${y}')">${y}</button>`).join('')}
       </div>
       <div class="wrapped-grid">
         <div class="wrapped-stat-card featured">
-          <div class="wsc-label">Total Playtime</div>
+          <div class="wsc-label">${isAllTime ? 'Total Playtime' : `${year} Playtime`}</div>
           <div class="wsc-value">${Math.round(totalHours).toLocaleString()}h</div>
-          <div class="wsc-sub">${Math.round(totalHours / 24)} days · ${played} games played</div>
+          <div class="wsc-sub">${Math.round(totalHours / 24)} days · ${played} games played${isAllTime ? ` · ${never} never launched` : ''}</div>
         </div>
-        <div class="wrapped-stat-card">
+        ${isAllTime ? `<div class="wrapped-stat-card">
           <div class="wsc-label">Library Size</div>
-          <div class="wsc-value">${games.length}</div>
+          <div class="wsc-value">${d.totalGames}</div>
           <div class="wsc-sub">${never} never launched</div>
-        </div>
+        </div>` : `<div class="wrapped-stat-card">
+          <div class="wsc-label">Games Played in ${year}</div>
+          <div class="wsc-value">${games.length}</div>
+          <div class="wsc-sub">based on last played date</div>
+        </div>`}
         <div class="wrapped-stat-card">
-          <div class="wsc-label">Most Played</div>
+          <div class="wsc-label">Most Played ${isAllTime ? '' : 'in ' + year}</div>
           <div class="wsc-value" style="font-size:18px;margin-bottom:8px">${top5[0] ? esc(top5[0].name) : '—'}</div>
-          <div class="wsc-sub">${top5[0] ? fmtH(top5[0].playtime_forever) : ''}</div>
+          <div class="wsc-sub">${top5[0] ? fmtH(top5[0].playtime_forever) : 'No data'}</div>
         </div>
         ${d.bestCompletion ? `
         <div class="wrapped-stat-card">
-          <div class="wsc-label">Best Completion</div>
+          <div class="wsc-label">Best Completion (Top 5)</div>
           <div class="wsc-value">${d.bestCompletion.pct}%</div>
           <div class="wsc-sub">${esc(d.bestCompletion.game.name)}<br>${d.bestCompletion.unlocked}/${d.bestCompletion.total} achievements</div>
         </div>` : ''}
         ${d.rarestAch ? `
         <div class="wrapped-stat-card">
-          <div class="wsc-label">Rarest Achievement</div>
+          <div class="wsc-label">Rarest Achievement (Top 5)</div>
           <div class="wsc-value" style="font-size:14px;margin-bottom:8px">${esc(d.rarestAch.achievement.displayName || d.rarestAch.achievement.apiname)}</div>
           <div class="wsc-sub">${esc(d.rarestAch.game.name)}<br>Only ${d.rarestAch.pct.toFixed(1)}% of players have this</div>
         </div>` : ''}
         ${d.topGenre ? `
         <div class="wrapped-stat-card">
-          <div class="wsc-label">Top Genre</div>
+          <div class="wsc-label">Top Genre (Top 5)</div>
           <div class="wsc-value" style="font-size:20px">${esc(d.topGenre)}</div>
           <div class="wsc-sub">${d.topTag ? `Top tag: ${esc(d.topTag)}` : ''}</div>
         </div>` : ''}
-        ${d.neglected ? `
+        ${yearNeglected ? `
         <div class="wrapped-stat-card">
           <div class="wsc-label">Most Neglected</div>
-          <div class="wsc-value" style="font-size:14px;margin-bottom:8px">${esc(d.neglected.name)}</div>
-          <div class="wsc-sub">Last played ${fmtDate2(d.neglected.rtime_last_played)}</div>
+          <div class="wsc-value" style="font-size:14px;margin-bottom:8px">${esc(yearNeglected.name)}</div>
+          <div class="wsc-sub">Last played ${fmtDate2(yearNeglected.rtime_last_played)}</div>
         </div>` : ''}
-        <div class="wrapped-stat-card" style="grid-column:1/-1">
-          <div class="wsc-label">Top 5 Most Played</div>
+        ${top5.length ? `<div class="wrapped-stat-card" style="grid-column:1/-1">
+          <div class="wsc-label">Top ${top5.length} Most Played${isAllTime ? '' : ' in ' + year}</div>
           <div class="wrapped-top-games" style="margin-top:12px">
             ${top5.map((g, i) => `
               <div class="ws-top-row">
@@ -2100,7 +2103,7 @@ function showWrappedSummary() {
                 <div class="ws-top-val">${fmtH(g.playtime_forever)}</div>
               </div>`).join('')}
           </div>
-        </div>
+        </div>` : ''}
       </div>
       <div style="text-align:center;margin-top:40px">
         <button onclick="showPage('page-wrapped-slides')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px 24px;border-radius:var(--radius);cursor:pointer;margin-right:12px;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">← Back to Slides</button>
@@ -2108,6 +2111,9 @@ function showWrappedSummary() {
       </div>`;
     activeYear = year;
   }
+
+  // Expose for inline onclick in year tabs
+  window.wrappedRenderYear = renderSummary;
 
   renderSummary('All Time');
   showPage('page-wrapped-summary');
