@@ -169,14 +169,25 @@
   .group-find-btn:disabled { opacity: .35; cursor: not-allowed; }
 
   /* GROUP PICKER */
-  #page-group-picker { overflow-y: auto; padding: 32px 0; }
-  .gp-wrap { width: 860px; max-width: 95vw; }
-  .gp-section-label { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
-  .gp-shared-info { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
-  .gp-shared-count { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; color: var(--accent); }
-  .gp-shared-label { font-size: 13px; color: var(--muted); line-height: 1.4; }
-  .gp-members { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
-  .gp-member-pill { background: var(--card); border: 1px solid var(--border-bright); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-family: 'Orbitron', sans-serif; color: var(--accent); }
+  #page-group-picker { overflow-y: auto; padding: 40px 0; }
+  .gp-wrap { width: 820px; max-width: 95vw; }
+  .gp-section-label { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+
+  .gp-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .gp-topbar-title { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 3px; color: #fff; }
+  .gp-nav-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Exo 2', sans-serif; font-size: 12px; letter-spacing: 1px; padding: 7px 16px; border-radius: var(--radius); cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 8px; }
+  .gp-nav-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .gp-stats-row { display: flex; gap: 16px; margin-bottom: 24px; }
+  .gp-count-box { background: var(--card); border: 1px solid var(--border-bright); border-radius: 10px; padding: 20px 28px; min-width: 200px; flex-shrink: 0; }
+  .gp-count-box .gp-count-num { font-family: 'Orbitron', sans-serif; font-size: 44px; font-weight: 900; color: var(--accent); line-height: 1; }
+  .gp-count-box .gp-count-label { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .gp-count-box .gp-removed-note { font-size: 10px; color: var(--muted); margin-top: 6px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; opacity: .7; display: none; }
+  .gp-members-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; flex: 1; }
+  .gp-members { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .gp-member-pill { background: var(--surface); border: 1px solid var(--border-bright); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-family: 'Orbitron', sans-serif; color: var(--accent); letter-spacing: 1px; }
+
+  .gp-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 16px; }
 
   /* multi-tag pills */
   .selected-tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; min-height: 28px; }
@@ -184,15 +195,15 @@
   .sel-tag-pill .remove-tag { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; opacity: .7; transition: opacity .15s; }
   .sel-tag-pill .remove-tag:hover { opacity: 1; }
 
-  .top-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  .top-tag-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; border-radius: 20px; cursor: pointer; font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600; transition: all .15s; }
+  .top-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .top-tag-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; border-radius: 20px; cursor: pointer; font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600; transition: all .15s; }
   .top-tag-btn:hover { color: var(--text); border-color: var(--muted); }
   .top-tag-btn.active { background: rgba(77,157,224,.1); border-color: var(--accent); color: var(--accent); }
 
   /* match mode toggle */
   .match-mode-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
   .match-mode-label { font-size: 12px; color: var(--muted); font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
-  .toggle-group { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .toggle-group { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
   .toggle-opt { padding: 6px 16px; font-size: 12px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; color: var(--muted); cursor: pointer; transition: all .15s; border: none; background: none; }
   .toggle-opt.active { background: rgba(77,157,224,.15); color: var(--accent); }
 
@@ -325,7 +336,7 @@
 
 <!-- GROUP USER SELECT -->
 <div class="page hidden" id="page-group">
-  <button class="back-btn" onclick="goBack('page-landing')">← Back</button>
+  <button class="back-btn" onclick="goBack('page-landing')">← Home</button>
   <div style="text-align:center;width:700px;max-width:95vw">
     <div class="group-header-tag">Group Mode</div>
     <div class="group-title">Who's Playing?</div>
@@ -338,24 +349,33 @@
 
 <!-- GROUP TAG PICKER -->
 <div class="page hidden" id="page-group-picker">
-  <button class="back-btn" onclick="goBack('page-group')">← Back</button>
-  <div class="gp-wrap" style="text-align:center">
+  <div class="gp-wrap">
 
-    <!-- shared count + member pills -->
-    <div class="gp-shared-info">
-      <div>
-        <div class="gp-section-label">Shared Library</div>
-        <div style="display:flex;align-items:baseline;gap:10px">
-          <span class="gp-shared-count" id="gp-shared-count">…</span>
-          <span class="gp-shared-label">multiplayer games<br>owned by all players</span>
-          <div id="gp-removed-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px;font-family:'Orbitron',sans-serif;letter-spacing:1px"></div>
-        </div>
+    <!-- top bar: nav + title -->
+    <div class="gp-topbar">
+      <div style="display:flex;gap:10px">
+        <button class="gp-nav-btn" onclick="goBack('page-landing')">⬡ Home</button>
+        <button class="gp-nav-btn" onclick="goBack('page-group')">← Change Players</button>
       </div>
-      <div class="gp-members" id="gp-members"></div>
+      <div class="gp-topbar-title">Group Picker</div>
+    </div>
+
+    <!-- stats row: count box + members box -->
+    <div class="gp-stats-row">
+      <div class="gp-count-box">
+        <div class="gp-section-label">Shared Library</div>
+        <div class="gp-count-num" id="gp-shared-count">…</div>
+        <div class="gp-count-label">multiplayer games<br>owned by all players</div>
+        <div class="gp-removed-note" id="gp-removed-note"></div>
+      </div>
+      <div class="gp-members-box">
+        <div class="gp-section-label">Players</div>
+        <div class="gp-members" id="gp-members"></div>
+      </div>
     </div>
 
     <!-- scan progress (visible while loading) -->
-    <div id="scan-progress-wrap" class="scan-progress-block" style="margin-bottom:28px;display:none">
+    <div id="scan-progress-wrap" class="scan-progress-block" style="margin-bottom:24px;display:none">
       <div class="spb-label">Scanning Library</div>
       <div class="spb-msg" id="spb-msg">Starting…</div>
       <div class="spb-bar-wrap"><div class="spb-bar-fill" id="spb-fill"></div><div class="spb-bar-shimmer"></div></div>
@@ -367,27 +387,34 @@
 
     <!-- tag content (hidden until scan done) -->
     <div id="tag-content" style="display:none">
-      <div class="gp-section-label" style="text-align:left;margin-bottom:10px">Top Tags In Your Library</div>
-      <div class="top-tags" id="top-tags"></div>
 
-      <div class="gp-section-label" style="text-align:left;margin-bottom:10px;margin-top:24px">Search & Add Tags</div>
-      <div class="tag-search-wrap">
-        <input type="text" id="tag-search" placeholder="e.g. Co-op, Tower Defense…" autocomplete="off" />
-        <div class="tag-dropdown" id="tag-dropdown"></div>
+      <!-- top tags card -->
+      <div class="gp-card">
+        <div class="gp-section-label">Top Tags In Your Library</div>
+        <div class="top-tags" id="top-tags"></div>
       </div>
 
-      <div class="selected-tags-row" id="selected-tags-row"></div>
-
-      <div class="match-mode-wrap" id="match-mode-wrap" style="display:none">
-        <span class="match-mode-label">Match Mode:</span>
-        <div class="toggle-group">
-          <button class="toggle-opt active" id="mode-all" onclick="setMatchMode('all')">ALL tags</button>
-          <button class="toggle-opt" id="mode-any" onclick="setMatchMode('any')">ANY tag</button>
+      <!-- search card -->
+      <div class="gp-card">
+        <div class="gp-section-label">Search & Add Tags</div>
+        <div class="tag-search-wrap">
+          <input type="text" id="tag-search" placeholder="e.g. Co-op, Tower Defense…" autocomplete="off" />
+          <div class="tag-dropdown" id="tag-dropdown"></div>
         </div>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px" id="mode-hint">Game must match every tag</span>
+        <div class="selected-tags-row" id="selected-tags-row"></div>
+        <div class="match-mode-wrap" id="match-mode-wrap" style="display:none">
+          <span class="match-mode-label">Match Mode:</span>
+          <div class="toggle-group">
+            <button class="toggle-opt active" id="mode-all" onclick="setMatchMode('all')">ALL tags</button>
+            <button class="toggle-opt" id="mode-any" onclick="setMatchMode('any')">ANY tag</button>
+          </div>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px" id="mode-hint">Game must match every tag</span>
+        </div>
       </div>
 
-      <button class="roll-btn" id="roll-btn" onclick="startRoll()" disabled>🎲 Roll The Dice</button>
+      <div style="text-align:center;padding-bottom:40px">
+        <button class="roll-btn" id="roll-btn" onclick="startRoll()" disabled>🎲 Roll The Dice</button>
+      </div>
     </div>
   </div>
 </div>
@@ -547,7 +574,7 @@ async function findGroupGames() {
       const removedNote = document.getElementById('gp-removed-note');
       if (msg.singlePlayerRemoved > 0) {
         removedNote.textContent = `(${msg.singlePlayerRemoved} single-player only game${msg.singlePlayerRemoved !== 1 ? 's' : ''} hidden)`;
-        removedNote.style.display = '';
+        removedNote.style.display = 'block';
       } else {
         removedNote.style.display = 'none';
       }
