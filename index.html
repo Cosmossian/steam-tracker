@@ -65,11 +65,11 @@
 
   /* sub-mode cards that slide in below each parent */
   .sub-modes-wrap { overflow: hidden; max-height: 0; opacity: 0; transition: max-height .45s cubic-bezier(0.4,0,0.2,1), opacity .3s ease, margin .3s ease; margin-top: 0; width: 220px; }
-  .sub-modes-wrap.open { max-height: 600px; opacity: 1; margin-top: 12px; }
+  .sub-modes-wrap.open { max-height: 600px; opacity: 1; margin-top: 12px; overflow: visible; }
   .sub-mode-cards { display: flex; flex-direction: column; gap: 10px; }
   .sub-mode-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; text-align: center; position: relative; overflow: hidden; }
   .sub-mode-card::before { content: ''; position: absolute; inset: 0; background: var(--accent-glow); opacity: 0; transition: opacity .2s; }
-  .sub-mode-card:hover { border-color: var(--accent); transform: translateX(3px); box-shadow: 0 4px 20px rgba(77,157,224,0.1); }
+  .sub-mode-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(77,157,224,0.1); }
   .sub-mode-card:hover::before { opacity: 1; }
   .sub-mode-card.soon { opacity: .4; cursor: not-allowed; }
   .sub-mode-card.soon:hover { transform: none; box-shadow: none; border-color: var(--border); }
@@ -263,6 +263,33 @@
   .roll-btn { background: linear-gradient(135deg, #1b6eb5, var(--accent)); border: none; border-radius: var(--radius); color: #fff; font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 3px; padding: 16px 48px; cursor: pointer; text-transform: uppercase; transition: opacity .2s, box-shadow .2s; box-shadow: 0 0 30px rgba(77,157,224,0.3); margin-top: 8px; }
   .roll-btn:hover { opacity: .9; box-shadow: 0 0 50px rgba(77,157,224,0.5); }
   .roll-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+  /* Picker mode toggle (Random vs I Have Ideas) */
+  .picker-mode-toggle { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid var(--border-bright); border-radius: 8px; overflow: hidden; }
+  .picker-mode-btn { flex: 1; padding: 12px 20px; background: none; border: none; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; transition: all .2s; }
+  .picker-mode-btn.active { background: rgba(77,157,224,0.1); color: var(--accent); }
+  .picker-mode-btn:first-child { border-right: 1px solid var(--border-bright); }
+
+  /* Game search (I Have Ideas) */
+  .game-search-wrap { position: relative; margin-bottom: 12px; }
+  .game-search-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 11px 16px; color: #fff; font-family: 'Exo 2', sans-serif; font-size: 14px; outline: none; transition: border-color .2s; }
+  .game-search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .game-search-wrap input::placeholder { color: var(--muted); }
+  .game-results { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+  .game-result-row { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; transition: border-color .15s; }
+  .game-result-row:hover { border-color: var(--border-bright); }
+  .game-result-row.all-own { border-color: rgba(77,224,138,0.3); }
+  .game-result-img { width: 80px; height: 37px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--border); }
+  .game-result-info { flex: 1; min-width: 0; }
+  .game-result-name { font-size: 13px; font-weight: 600; color: #dce6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+  .game-result-owners { display: flex; flex-wrap: wrap; gap: 5px; }
+  .owner-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-family: 'Orbitron', sans-serif; letter-spacing: .5px; border-radius: 20px; padding: 2px 8px; border: 1px solid; }
+  .owner-badge.owns { color: var(--green); background: rgba(77,224,138,0.07); border-color: rgba(77,224,138,0.25); }
+  .owner-badge.missing { color: #e05a4d; background: rgba(224,90,77,0.07); border-color: rgba(224,90,77,0.25); }
+  .game-result-action { flex-shrink: 0; }
+  .lets-play-btn { background: var(--green); border: none; border-radius: var(--radius); color: #0a1a0f; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 8px 14px; cursor: pointer; text-transform: uppercase; transition: opacity .2s; white-space: nowrap; }
+  .lets-play-btn:hover { opacity: .85; }
+  .game-search-empty { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
 
   /* ROLL PAGE */
   #page-roll { overflow: hidden; }
@@ -482,33 +509,57 @@
     <!-- tag content (hidden until scan done) -->
     <div id="tag-content" style="display:none">
 
-      <!-- top tags card -->
-      <div class="gp-card">
-        <div class="gp-section-label">Top Tags In Your Library</div>
-        <div class="top-tags" id="top-tags"></div>
+      <!-- mode toggle -->
+      <div class="picker-mode-toggle">
+        <button class="picker-mode-btn active" id="pmb-random" onclick="setPickerMode('random')">🎲 Random</button>
+        <button class="picker-mode-btn" id="pmb-ideas" onclick="setPickerMode('ideas')">💡 I Have Some Ideas</button>
       </div>
 
-      <!-- search card -->
-      <div class="gp-card">
-        <div class="gp-section-label">Search & Add Tags</div>
-        <div class="tag-search-wrap">
-          <input type="text" id="tag-search" placeholder="e.g. Co-op, Tower Defense…" autocomplete="off" />
-          <div class="tag-dropdown" id="tag-dropdown"></div>
+      <!-- RANDOM PANEL -->
+      <div id="panel-random">
+        <!-- top tags card -->
+        <div class="gp-card">
+          <div class="gp-section-label">Top Tags In Your Library</div>
+          <div class="top-tags" id="top-tags"></div>
         </div>
-        <div class="selected-tags-row" id="selected-tags-row"></div>
-        <div class="match-mode-wrap" id="match-mode-wrap" style="display:none">
-          <span class="match-mode-label">Match Mode:</span>
-          <div class="toggle-group">
-            <button class="toggle-opt active" id="mode-all" onclick="setMatchMode('all')">ALL tags</button>
-            <button class="toggle-opt" id="mode-any" onclick="setMatchMode('any')">ANY tag</button>
+
+        <!-- search card -->
+        <div class="gp-card">
+          <div class="gp-section-label">Search & Add Tags</div>
+          <div class="tag-search-wrap">
+            <input type="text" id="tag-search" placeholder="e.g. Co-op, Tower Defense…" autocomplete="off" />
+            <div class="tag-dropdown" id="tag-dropdown"></div>
           </div>
-          <span style="font-size:11px;color:var(--muted);margin-left:8px" id="mode-hint">Game must match every tag</span>
+          <div class="selected-tags-row" id="selected-tags-row"></div>
+          <div class="match-mode-wrap" id="match-mode-wrap" style="display:none">
+            <span class="match-mode-label">Match Mode:</span>
+            <div class="toggle-group">
+              <button class="toggle-opt active" id="mode-all" onclick="setMatchMode('all')">ALL tags</button>
+              <button class="toggle-opt" id="mode-any" onclick="setMatchMode('any')">ANY tag</button>
+            </div>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px" id="mode-hint">Game must match every tag</span>
+          </div>
+        </div>
+
+        <div style="text-align:center;padding-bottom:40px">
+          <button class="roll-btn" id="roll-btn" onclick="startRoll()" disabled>🎲 Roll The Dice</button>
         </div>
       </div>
 
-      <div style="text-align:center;padding-bottom:40px">
-        <button class="roll-btn" id="roll-btn" onclick="startRoll()" disabled>🎲 Roll The Dice</button>
+      <!-- IDEAS PANEL -->
+      <div id="panel-ideas" style="display:none">
+        <div class="gp-card">
+          <div class="gp-section-label">Search For A Game</div>
+          <div class="game-search-wrap">
+            <input type="text" id="game-search-input" placeholder="Type a game name…" autocomplete="off" />
+          </div>
+          <div class="game-results" id="game-results">
+            <div class="game-search-empty">Start typing to search across all players' libraries</div>
+          </div>
+        </div>
+        <div style="padding-bottom:40px"></div>
       </div>
+
     </div>
   </div>
 </div>
@@ -544,11 +595,13 @@ let currentSteamId = "", currentDisplayName = "";
 let allGames = [], activeAppId = null, cachedAchievements = {};
 let groupUsers = [], selectedGroupIds = [];
 let groupData = null;
-let selectedTags = [];   // array of selected tags
-let matchMode = 'all';   // 'all' | 'any'
+let selectedTags = [];
+let matchMode = 'all';
 let filteredAppIds = [];
 let rolledGame = null;
 let scanStartTime = 0;
+let pickerMode = 'random';         // 'random' | 'ideas'
+let allUsersGames = {};            // { steamId: [games array] } — all games across all selected users
 
 // ── NAV ────────────────────────────────────────────────────────────────────
 function showPage(id) {
@@ -675,6 +728,14 @@ async function findGroupGames() {
   selectedTags = [];
   matchMode = 'all';
   groupData = null;
+  pickerMode = 'random';
+  allUsersGames = {};
+
+  // Reset picker mode UI
+  document.getElementById('pmb-random').classList.add('active');
+  document.getElementById('pmb-ideas').classList.remove('active');
+  document.getElementById('panel-random').style.display = '';
+  document.getElementById('panel-ideas').style.display = 'none';
 
   document.getElementById('gp-shared-count').textContent = '…';
   document.getElementById('gp-members').innerHTML = selectedGroupIds.map(sid => {
@@ -692,6 +753,15 @@ async function findGroupGames() {
 
   const ids = selectedGroupIds.join(',');
   const evtSource = new EventSource(`/api/group/games?steamids=${ids}`);
+
+  // Also fetch each user's full library in parallel for the ideas search
+  Promise.all(selectedGroupIds.map(async sid => {
+    try {
+      const res = await fetch(`/api/games?steamid=${sid}`);
+      const games = await res.json();
+      if (Array.isArray(games)) allUsersGames[sid] = games;
+    } catch {}
+  }));
 
   evtSource.onmessage = (e) => {
     const msg = JSON.parse(e.data);
@@ -802,6 +872,96 @@ function buildTagSearch(allTags) {
     else { fresh.classList.remove('valid','invalid'); }
   });
   document.addEventListener('click', e => { if (!e.target.closest('.tag-search-wrap')) dropdown.classList.remove('open'); });
+}
+
+// ── PICKER MODE TOGGLE ─────────────────────────────────────────────────────
+function setPickerMode(mode) {
+  pickerMode = mode;
+  document.getElementById('pmb-random').classList.toggle('active', mode === 'random');
+  document.getElementById('pmb-ideas').classList.toggle('active', mode === 'ideas');
+  document.getElementById('panel-random').style.display = mode === 'random' ? '' : 'none';
+  document.getElementById('panel-ideas').style.display = mode === 'ideas' ? '' : 'none';
+  if (mode === 'ideas') buildGameSearch();
+}
+
+// ── GAME SEARCH (I Have Ideas) ─────────────────────────────────────────────
+function buildGameSearch() {
+  const input = document.getElementById('game-search-input');
+  // clone to reset listeners
+  const fresh = input.cloneNode(true);
+  input.parentNode.replaceChild(fresh, input);
+  fresh.focus();
+  fresh.addEventListener('input', () => renderGameResults(fresh.value.trim()));
+}
+
+function renderGameResults(query) {
+  const container = document.getElementById('game-results');
+  if (!query) {
+    container.innerHTML = '<div class="game-search-empty">Start typing to search across all players\' libraries</div>';
+    return;
+  }
+
+  const q = query.toLowerCase();
+
+  // Build a combined game map across ALL users' libraries
+  // allUsersGames is { steamId: [games] } populated during findGroupGames
+  const gameMap = {}; // appid -> { name, owners: Set of steamIds }
+  for (const [sid, games] of Object.entries(allUsersGames)) {
+    for (const g of games) {
+      if (!gameMap[g.appid]) gameMap[g.appid] = { appid: g.appid, name: g.name, owners: new Set() };
+      gameMap[g.appid].owners.add(sid);
+    }
+  }
+
+  const matches = Object.values(gameMap)
+    .filter(g => g.name.toLowerCase().includes(q))
+    .sort((a, b) => {
+      // sort: all-own first, then by name
+      const aAll = selectedGroupIds.every(id => a.owners.has(id));
+      const bAll = selectedGroupIds.every(id => b.owners.has(id));
+      if (aAll && !bAll) return -1;
+      if (!aAll && bAll) return 1;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 15);
+
+  if (!matches.length) {
+    container.innerHTML = '<div class="game-search-empty">No games found matching that name</div>';
+    return;
+  }
+
+  container.innerHTML = matches.map(g => {
+    const allOwn = selectedGroupIds.every(id => g.owners.has(id));
+    const ownerBadges = selectedGroupIds.map(sid => {
+      const owns = g.owners.has(sid);
+      const u = groupUsers.find(u => u.steamId === sid);
+      const name = u?.displayName || sid;
+      return `<span class="owner-badge ${owns ? 'owns' : 'missing'}">${owns ? '✓' : '✗'} ${esc(name)}</span>`;
+    }).join('');
+
+    const actionBtn = allOwn
+      ? `<button class="lets-play-btn" onclick="letsPlayThis(${g.appid})">Let's Play →</button>`
+      : `<span style="font-size:10px;color:var(--muted);font-family:'Orbitron',sans-serif;letter-spacing:1px">Not shared</span>`;
+
+    return `
+      <div class="game-result-row ${allOwn ? 'all-own' : ''}">
+        <img class="game-result-img" src="https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg" alt="" onerror="this.style.opacity=0" />
+        <div class="game-result-info">
+          <div class="game-result-name">${esc(g.name)}</div>
+          <div class="game-result-owners">${ownerBadges}</div>
+        </div>
+        <div class="game-result-action">${actionBtn}</div>
+      </div>`;
+  }).join('');
+}
+
+async function letsPlayThis(appId) {
+  // Find the game in the shared list, go straight to result
+  const game = groupData?.sharedGames?.find(g => g.appid === appId);
+  if (!game) return;
+  rolledGame = game;
+  filteredAppIds = [appId];
+  await showResult(game);
 }
 
 // ── ROLL (SSE filter + animation) ─────────────────────────────────────────
