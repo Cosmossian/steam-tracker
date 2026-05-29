@@ -1784,6 +1784,10 @@ async function startWrapped(steamId) {
     const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
     const allTimeTop5  = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
     const allTimeTop20 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 20);
+    // Also grab top 20 most recently played — catches recent completions not in top 20 by hours
+    const recentTop20  = [...games].filter(g => g.rtime_last_played).sort((a, b) => (b.rtime_last_played||0) - (a.rtime_last_played||0)).slice(0, 20);
+    // Combined pool for all-time best completion
+    const allTimeCompletionPool = [...new Map([...allTimeTop20, ...recentTop20].map(g => [g.appid, g])).values()];
 
     // Most neglected all-time
     const neglected = playedGames
@@ -1804,17 +1808,19 @@ async function startWrapped(steamId) {
       const yHours = yGames.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
       const yTop5  = [...yGames].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
       const yTop20 = [...yGames].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 20);
+      const yRecent20 = [...yGames].sort((a, b) => (b.rtime_last_played||0) - (a.rtime_last_played||0)).slice(0, 20);
+      const yCompletionPool = [...new Map([...yTop20, ...yRecent20].map(g => [g.appid, g])).values()];
       const yNeglected = yGames.filter(g => g.playtime_forever > 0).sort((a,b) => (a.rtime_last_played||0)-(b.rtime_last_played||0))[0];
-      yearStats[year] = { games: yGames, hours: yHours, top5: yTop5, top20: yTop20, neglected: yNeglected };
+      yearStats[year] = { games: yGames, hours: yHours, top5: yTop5, top20: yTop20, completionPool: yCompletionPool, neglected: yNeglected };
     }
 
     // 2. Collect all unique games to fetch achievement data for:
     //    - top 20 all-time (for best completion across more games)
     //    - every year's top 5 (for per-year stats)
     //    - top 5 all-time (for rarest achievement)
-    const fetchPoolIds = new Set(allTimeTop20.map(g => g.appid));
+    const fetchPoolIds = new Set(allTimeCompletionPool.map(g => g.appid));
     for (const ys of Object.values(yearStats)) {
-      for (const g of [...(ys.top5 || []), ...(ys.top20 || [])]) fetchPoolIds.add(g.appid);
+      for (const g of [...(ys.completionPool || []), ...(ys.top5 || [])]) fetchPoolIds.add(g.appid);
     }
     const fetchPoolGames = [...fetchPoolIds].map(id => games.find(g => g.appid === id)).filter(Boolean);
 
@@ -1869,15 +1875,15 @@ async function startWrapped(steamId) {
       return { bestCompletion, mostUnlocked, topGenre, topTag, withAch };
     }
 
-    // All-time stats — use top 20 pool for best completion, top 5 for rarest/slides
-    const allTimeStats = computeStatsForGames(allTimeTop20);
+    // All-time stats — use combined top20-by-hours + top20-by-recent for best completion
+    const allTimeStats = computeStatsForGames(allTimeCompletionPool);
     const { bestCompletion, mostUnlocked, topGenre, topTag, withAch } = allTimeStats;
     const achResults = allTimeTop5.map(g => achByAppId[g.appid]).filter(Boolean);
 
     // Per-year computed stats (excluding rarest — that stays all-time only)
     for (const year of years) {
       const ys = yearStats[year];
-      const ysStats = computeStatsForGames(ys.top20 || ys.top5);
+      const ysStats = computeStatsForGames(ys.completionPool || ys.top5);
       ys.bestCompletion = ysStats.bestCompletion;
       ys.mostUnlocked   = ysStats.mostUnlocked;
       ys.topGenre = ysStats.topGenre;
