@@ -18,7 +18,7 @@
   body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(77,157,224,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(77,157,224,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
 
   .page { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; transition: opacity .4s ease, transform .4s ease; }
-  .page.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+  .page.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); visibility: hidden; }
 
   /* UNIVERSAL NAV BAR */
   .global-nav {
@@ -898,8 +898,14 @@ function updateNav(pageId) {
 }
 
 function goHome() {
-  // Cancel any in-flight wrapped loading
-  wrappedRunId++;
+  // Cancel any in-flight wrapped loading immediately
+  if (wrappedAbortCtrl) { wrappedAbortCtrl.abort(); wrappedAbortCtrl = null; }
+  // Reset loading UI so next run starts clean
+  document.getElementById('wrapped-spb-fill').style.width = '0%';
+  document.getElementById('wrapped-spb-fill').style.background = '';
+  document.getElementById('wrapped-spb-count').textContent = '';
+  document.getElementById('wrapped-spb-eta').textContent = '';
+  document.getElementById('wrapped-load-msg').textContent = 'Loading your library…';
   // Remove wrapped slide listeners
   const slidePage = document.getElementById('page-wrapped-slides');
   slidePage.removeEventListener('click', nextWrappedSlide);
@@ -1666,7 +1672,7 @@ let wrappedData = null;
 let wrappedSlideIndex = 0;
 let wrappedSlides = [];
 let wrappedSteamId = '';
-let wrappedRunId = 0; // incremented each run so stale async runs self-cancel
+let wrappedAbortCtrl = null; // AbortController for in-flight fetches
 
 // Web Audio context for sound effects
 let audioCtx = null;
@@ -1740,11 +1746,23 @@ async function launchWrappedFromLogin() {
 }
 
 async function startWrapped(steamId) {
+  // Cancel any previous in-flight load
+  if (wrappedAbortCtrl) wrappedAbortCtrl.abort();
+  wrappedAbortCtrl = new AbortController();
+  const signal = wrappedAbortCtrl.signal;
+  const abortedErr = 'WrappedAborted';
+
+  const afetch = (url) => {
+    if (signal.aborted) throw new Error(abortedErr);
+    return fetch(url, { signal }).then(r => {
+      if (signal.aborted) throw new Error(abortedErr);
+      return r.json();
+    });
+  };
+
   wrappedSteamId = steamId;
   wrappedData = null;
   wrappedSlideIndex = 0;
-  const myRunId = ++wrappedRunId; // grab this run's id
-  const alive = () => myRunId === wrappedRunId; // returns false if goHome() was called
   showPage('page-wrapped-load');
   document.getElementById('wrapped-spb-fill').style.width = '0%';
   document.getElementById('wrapped-spb-count').textContent = '';
@@ -1756,8 +1774,7 @@ async function startWrapped(steamId) {
   try {
     // 1. Fetch all owned games
     document.getElementById('wrapped-spb-fill').style.width = '5%';
-    const games = await (await fetch(`/api/games?steamid=${steamId}`)).json();
-    if (!alive()) return; // goHome() was called while loading
+    const games = await afetch(`/api/games?steamid=${steamId}`);
     if (!Array.isArray(games) || !games.length) throw new Error('No games found for this Steam ID.');
 
     // All-time stats
@@ -1811,12 +1828,14 @@ async function startWrapped(steamId) {
       const rem = Math.ceil((allTop5Games.length - i - 1) / rate);
       document.getElementById('wrapped-spb-eta').textContent = rem > 0 ? `~${rem}s remaining` : '';
       try {
-        const res = await fetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
-        const data = await res.json();
+        const data = await afetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
         achByAppId[g.appid] = { game: g, ...data };
-      } catch { achByAppId[g.appid] = { game: g, supported: false, achievements: [] }; }
+      } catch(err) {
+        if (err.message === abortedErr) throw err; // re-throw to stop the loop
+        achByAppId[g.appid] = { game: g, supported: false, achievements: [] };
+      }
     }
-    if (!alive()) return; // cancelled mid-fetch
+    if (signal.aborted) return;
 
     // Helper: compute stats for a given list of games using achByAppId
     function computeStatsForGames(gameList) {
@@ -1863,8 +1882,7 @@ async function startWrapped(steamId) {
     let rarestAch = null;
     for (const r of withAch) {
       try {
-        const res = await fetch(`https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${r.game.appid}`);
-        const data = await res.json();
+        const data = await afetch(`https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${r.game.appid}`);
         const globalPcts = {};
         for (const a of (data.achievementpercentages?.achievements || [])) globalPcts[a.name] = a.percent;
         for (const a of r.achievements) {
@@ -1879,7 +1897,7 @@ async function startWrapped(steamId) {
 
     document.getElementById('wrapped-spb-fill').style.width = '100%';
     await sleep(300);
-    if (!alive()) return; // cancelled during final sleep
+    if (signal.aborted) return;
 
     wrappedData = {
       games, totalGames, playedGames, neverPlayed, totalHours,
@@ -1890,9 +1908,11 @@ async function startWrapped(steamId) {
     buildWrappedSlides();
     showWrappedSlides();
   } catch (e) {
+    if (e.name === 'AbortError' || e.message === 'WrappedAborted') return; // silently cancelled
     document.getElementById('wrapped-load-msg').textContent = '❌ ' + e.message;
     document.getElementById('wrapped-spb-fill').style.background = '#e05a4d';
   }
+  wrappedAbortCtrl = null;
 }
 
 function buildWrappedSlides() {
