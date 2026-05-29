@@ -1843,12 +1843,17 @@ async function startWrapped(steamId) {
       const withAch = results.filter(r => r.supported && r.achievements?.length);
 
       let bestCompletion = null;
+      let mostUnlocked = null;
       if (withAch.length) {
-        bestCompletion = withAch.map(r => {
+        const mapped = withAch.map(r => {
           const total = r.achievements.length;
           const unlocked = r.achievements.filter(a => a.achieved).length;
           return { game: r.game, unlocked, total, pct: total ? Math.round(unlocked/total*100) : 0 };
-        }).sort((a, b) => b.pct - a.pct)[0];
+        });
+        bestCompletion = [...mapped].sort((a, b) => b.pct - a.pct)[0];
+        mostUnlocked  = [...mapped].sort((a, b) => b.unlocked - a.unlocked)[0];
+        // Don't show mostUnlocked if it's the same game as bestCompletion
+        if (mostUnlocked?.game.appid === bestCompletion?.game.appid) mostUnlocked = null;
       }
 
       const genreCount = {}, tagCount = {};
@@ -1859,12 +1864,12 @@ async function startWrapped(steamId) {
       const topGenre = Object.entries(genreCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
       const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
 
-      return { bestCompletion, topGenre, topTag, withAch };
+      return { bestCompletion, mostUnlocked, topGenre, topTag, withAch };
     }
 
     // All-time stats
     const allTimeStats = computeStatsForGames(allTimeTop5);
-    const { bestCompletion, topGenre, topTag, withAch } = allTimeStats;
+    const { bestCompletion, mostUnlocked, topGenre, topTag, withAch } = allTimeStats;
     const achResults = allTimeTop5.map(g => achByAppId[g.appid]).filter(Boolean);
 
     // Per-year computed stats (excluding rarest — that stays all-time only)
@@ -1872,6 +1877,7 @@ async function startWrapped(steamId) {
       const ys = yearStats[year];
       const ysStats = computeStatsForGames(ys.top5);
       ys.bestCompletion = ysStats.bestCompletion;
+      ys.mostUnlocked   = ysStats.mostUnlocked;
       ys.topGenre = ysStats.topGenre;
       ys.topTag = ysStats.topTag;
     }
@@ -1902,7 +1908,7 @@ async function startWrapped(steamId) {
     wrappedData = {
       games, totalGames, playedGames, neverPlayed, totalHours,
       top5: allTimeTop5, top3: allTimeTop5.slice(0,3), neglected,
-      achResults, withAch, bestCompletion, rarestAch,
+      achResults, withAch, bestCompletion, mostUnlocked, rarestAch,
       topGenre, topTag, years, yearStats, steamId,
       displayName: currentDisplayName || steamId
     };
@@ -2119,6 +2125,7 @@ function showWrappedSummary() {
     const yearNeglected = isAllTime ? d.neglected : (d.yearStats[year]?.neglected || null);
     // Per-year achievement stats
     const bestCompletion = isAllTime ? d.bestCompletion : (d.yearStats[year]?.bestCompletion || null);
+    const mostUnlocked   = isAllTime ? d.mostUnlocked   : (d.yearStats[year]?.mostUnlocked   || null);
     const topGenre = isAllTime ? d.topGenre : (d.yearStats[year]?.topGenre || null);
     const topTag   = isAllTime ? d.topTag   : (d.yearStats[year]?.topTag   || null);
 
@@ -2155,6 +2162,12 @@ function showWrappedSummary() {
           <div class="wsc-label">Best Completion${isAllTime ? '' : ` · ${year}`}</div>
           <div class="wsc-value">${bestCompletion.pct}%</div>
           <div class="wsc-sub">${esc(bestCompletion.game.name)}<br>${bestCompletion.unlocked}/${bestCompletion.total} achievements</div>
+        </div>` : ''}
+        ${mostUnlocked ? `
+        <div class="wrapped-stat-card">
+          <div class="wsc-label">Most Unlocked${isAllTime ? '' : ` · ${year}`}</div>
+          <div class="wsc-value">${mostUnlocked.unlocked}</div>
+          <div class="wsc-sub">${esc(mostUnlocked.game.name)}<br>${mostUnlocked.pct}% complete · ${mostUnlocked.unlocked}/${mostUnlocked.total}</div>
         </div>` : ''}
         ${d.rarestAch ? `
         <div class="wrapped-stat-card">
