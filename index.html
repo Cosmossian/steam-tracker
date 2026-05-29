@@ -418,9 +418,10 @@
   .ws-top-val { font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--accent); flex-shrink: 0; }
 
   /* Scrollable summary */
-  #page-wrapped-summary { overflow-y: auto; padding: 20px 0 80px; }
+  #page-wrapped-summary { overflow: hidden; padding: 0; }
+  .wrapped-summary-scroll { position: absolute; inset: 52px 0 0 0; overflow-y: auto; padding: 24px 0 80px; display: flex; justify-content: center; }
   .wrapped-summary-inner { width: 820px; max-width: 95vw; }
-  .wrapped-summary-hero { text-align: center; margin-bottom: 28px; padding-top: 16px; }
+  .wrapped-summary-hero { text-align: center; margin-bottom: 28px; padding-top: 8px; }
   .wrapped-summary-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 4px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
   .wrapped-summary-hero .wsh-sub { font-size: 14px; color: var(--muted); }
   .wrapped-year-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
@@ -755,7 +756,9 @@
 
 <!-- STEAM WRAPPED: SUMMARY SCROLL -->
 <div class="page hidden" id="page-wrapped-summary">
-  <div class="wrapped-summary-inner" id="wrapped-summary-inner"></div>
+  <div class="wrapped-summary-scroll">
+    <div class="wrapped-summary-inner" id="wrapped-summary-inner"></div>
+  </div>
 </div>
 
 <script>
@@ -895,7 +898,9 @@ function updateNav(pageId) {
 }
 
 function goHome() {
-  // Remove wrapped slide listeners so they can't fire after leaving
+  // Cancel any in-flight wrapped loading
+  wrappedRunId++;
+  // Remove wrapped slide listeners
   const slidePage = document.getElementById('page-wrapped-slides');
   slidePage.removeEventListener('click', nextWrappedSlide);
   slidePage.removeEventListener('keydown', wrappedKeyHandler);
@@ -1661,6 +1666,7 @@ let wrappedData = null;
 let wrappedSlideIndex = 0;
 let wrappedSlides = [];
 let wrappedSteamId = '';
+let wrappedRunId = 0; // incremented each run so stale async runs self-cancel
 
 // Web Audio context for sound effects
 let audioCtx = null;
@@ -1737,6 +1743,8 @@ async function startWrapped(steamId) {
   wrappedSteamId = steamId;
   wrappedData = null;
   wrappedSlideIndex = 0;
+  const myRunId = ++wrappedRunId; // grab this run's id
+  const alive = () => myRunId === wrappedRunId; // returns false if goHome() was called
   showPage('page-wrapped-load');
   document.getElementById('wrapped-spb-fill').style.width = '0%';
   document.getElementById('wrapped-spb-count').textContent = '';
@@ -1749,6 +1757,7 @@ async function startWrapped(steamId) {
     // 1. Fetch all owned games
     document.getElementById('wrapped-spb-fill').style.width = '5%';
     const games = await (await fetch(`/api/games?steamid=${steamId}`)).json();
+    if (!alive()) return; // goHome() was called while loading
     if (!Array.isArray(games) || !games.length) throw new Error('No games found for this Steam ID.');
 
     // All-time stats
@@ -1807,6 +1816,7 @@ async function startWrapped(steamId) {
         achByAppId[g.appid] = { game: g, ...data };
       } catch { achByAppId[g.appid] = { game: g, supported: false, achievements: [] }; }
     }
+    if (!alive()) return; // cancelled mid-fetch
 
     // Helper: compute stats for a given list of games using achByAppId
     function computeStatsForGames(gameList) {
@@ -1869,6 +1879,7 @@ async function startWrapped(steamId) {
 
     document.getElementById('wrapped-spb-fill').style.width = '100%';
     await sleep(300);
+    if (!alive()) return; // cancelled during final sleep
 
     wrappedData = {
       games, totalGames, playedGames, neverPlayed, totalHours,
