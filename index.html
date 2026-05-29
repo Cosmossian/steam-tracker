@@ -1932,13 +1932,13 @@ async function startWrapped(steamId) {
 
 function buildWrappedSlides() {
   const d = wrappedData;
+  const wrappedYear = new Date().getFullYear() - 1;
   wrappedSlides = [];
-
   // Slide 1: Total hours
   wrappedSlides.push({
     bg: 'linear-gradient(135deg, #080b10 0%, #0d1a2e 100%)',
     render: () => `
-      <div class="ws-eyebrow">Your 2024 in gaming</div>
+      <div class="ws-eyebrow">Your ${wrappedYear} in gaming</div>
       <div class="ws-number">${Math.round(d.totalHours).toLocaleString()}</div>
       <div class="ws-label">Hours Played</div>
       <div class="ws-sub">That's ${Math.round(d.totalHours/24)} days of your life.<br>Worth every second.</div>`,
