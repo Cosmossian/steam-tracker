@@ -6,11 +6,11 @@ const path = require("path");
 const crypto = require("crypto");
 const { MongoClient } = require("mongodb");
 
-const STEAM_API_KEY = process.env.STEAM_API_KEY || "332A0BDAEA7F4786C0BF5F5A8A0A7C3B";
+const STEAM_API_KEY = process.env.STEAM_API_KEY;
 const PORT = process.env.PORT || 3000;
-const MONGO_URL = process.env.MONGO_URL || "mongodb://admin:password@localhost:27017/";
+const MONGO_URL = process.env.MONGO_URL;
 const DB_NAME = "steamtracker";
-const SESSION_SECRET = process.env.SESSION_SECRET || "steamtracker-secret-2024";
+const SESSION_SECRET = process.env.SESSION_SECRET;
 
 let db;
 
