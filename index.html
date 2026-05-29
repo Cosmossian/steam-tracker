@@ -1852,8 +1852,6 @@ async function startWrapped(steamId) {
         });
         bestCompletion = [...mapped].sort((a, b) => b.pct - a.pct)[0];
         mostUnlocked  = [...mapped].sort((a, b) => b.unlocked - a.unlocked)[0];
-        // Don't show mostUnlocked if it's the same game as bestCompletion
-        if (mostUnlocked?.game.appid === bestCompletion?.game.appid) mostUnlocked = null;
       }
 
       const genreCount = {}, tagCount = {};
