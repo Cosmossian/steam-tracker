@@ -1903,7 +1903,8 @@ async function startWrapped(steamId) {
       games, totalGames, playedGames, neverPlayed, totalHours,
       top5: allTimeTop5, top3: allTimeTop5.slice(0,3), neglected,
       achResults, withAch, bestCompletion, rarestAch,
-      topGenre, topTag, years, yearStats, steamId
+      topGenre, topTag, years, yearStats, steamId,
+      displayName: currentDisplayName || steamId
     };
     buildWrappedSlides();
     showWrappedSlides();
@@ -2124,7 +2125,7 @@ function showWrappedSummary() {
     inner.innerHTML = `
       <div class="wrapped-summary-hero">
         <h1>Steam Wrapped</h1>
-        <div class="wsh-sub">${isAllTime ? 'All time stats' : `Your ${year} in gaming`} · ${d.steamId}</div>
+        <div class="wsh-sub">${isAllTime ? 'All time stats' : `Your ${year} in gaming`} · ${esc(d.displayName)}</div>
       </div>
       <div class="wrapped-year-tabs">
         ${years.map(y => `<button class="wrapped-year-tab ${y===year?'active':''}" onclick="wrappedRenderYear('${y}')">${y}</button>`).join('')}
