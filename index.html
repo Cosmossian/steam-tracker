@@ -1782,7 +1782,8 @@ async function startWrapped(steamId) {
     const playedGames = games.filter(g => g.playtime_forever > 0);
     const neverPlayed = games.filter(g => !g.playtime_forever || g.playtime_forever === 0);
     const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
-    const allTimeTop5 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+    const allTimeTop5  = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+    const allTimeTop20 = [...games].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 20);
 
     // Most neglected all-time
     const neglected = playedGames
@@ -1801,31 +1802,33 @@ async function startWrapped(steamId) {
     for (const year of years) {
       const yGames = games.filter(g => g.rtime_last_played && new Date(g.rtime_last_played * 1000).getFullYear() === year);
       const yHours = yGames.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
-      const yTop5 = [...yGames].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+      const yTop5  = [...yGames].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
+      const yTop20 = [...yGames].sort((a, b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 20);
       const yNeglected = yGames.filter(g => g.playtime_forever > 0).sort((a,b) => (a.rtime_last_played||0)-(b.rtime_last_played||0))[0];
-      yearStats[year] = { games: yGames, hours: yHours, top5: yTop5, neglected: yNeglected };
+      yearStats[year] = { games: yGames, hours: yHours, top5: yTop5, top20: yTop20, neglected: yNeglected };
     }
 
-    // 2. Collect all unique games across all-time top 5 AND every year's top 5
-    // so we can compute per-year stats in the summary
-    const allTop5AppIds = new Set(allTimeTop5.map(g => g.appid));
+    // 2. Collect all unique games to fetch achievement data for:
+    //    - top 20 all-time (for best completion across more games)
+    //    - every year's top 5 (for per-year stats)
+    //    - top 5 all-time (for rarest achievement)
+    const fetchPoolIds = new Set(allTimeTop20.map(g => g.appid));
     for (const ys of Object.values(yearStats)) {
-      for (const g of ys.top5) allTop5AppIds.add(g.appid);
+      for (const g of [...(ys.top5 || []), ...(ys.top20 || [])]) fetchPoolIds.add(g.appid);
     }
-    const allTop5Games = [...allTop5AppIds].map(id => games.find(g => g.appid === id)).filter(Boolean);
+    const fetchPoolGames = [...fetchPoolIds].map(id => games.find(g => g.appid === id)).filter(Boolean);
 
     document.getElementById('wrapped-spb-fill').style.width = '15%';
-    document.getElementById('wrapped-load-msg').textContent = `Fetching achievements for ${allTop5Games.length} games…`;
+    document.getElementById('wrapped-load-msg').textContent = `Fetching achievements for ${fetchPoolGames.length} games…`;
 
-    // achByAppId: appid -> { achievements, genres, tags, supported }
     const achByAppId = {};
-    for (let i = 0; i < allTop5Games.length; i++) {
-      const g = allTop5Games[i];
-      document.getElementById('wrapped-spb-fill').style.width = (15 + ((i + 1) / allTop5Games.length) * 40) + '%';
-      document.getElementById('wrapped-spb-count').textContent = `Achievement data: game ${i+1} of ${allTop5Games.length}`;
+    for (let i = 0; i < fetchPoolGames.length; i++) {
+      const g = fetchPoolGames[i];
+      document.getElementById('wrapped-spb-fill').style.width = (15 + ((i + 1) / fetchPoolGames.length) * 40) + '%';
+      document.getElementById('wrapped-spb-count').textContent = `Achievement data: game ${i+1} of ${fetchPoolGames.length}`;
       const elapsed = (Date.now() - loadStart) / 1000;
       const rate = (i + 1) / Math.max(elapsed, 0.1);
-      const rem = Math.ceil((allTop5Games.length - i - 1) / rate);
+      const rem = Math.ceil((fetchPoolGames.length - i - 1) / rate);
       document.getElementById('wrapped-spb-eta').textContent = rem > 0 ? `~${rem}s remaining` : '';
       try {
         const data = await afetch(`/api/achievements/${g.appid}?steamid=${steamId}`);
@@ -1850,8 +1853,9 @@ async function startWrapped(steamId) {
           const unlocked = r.achievements.filter(a => a.achieved).length;
           return { game: r.game, unlocked, total, pct: total ? Math.round(unlocked/total*100) : 0 };
         });
-        bestCompletion = [...mapped].sort((a, b) => b.pct - a.pct)[0];
-        mostUnlocked  = [...mapped].sort((a, b) => b.unlocked - a.unlocked)[0];
+        // Sort: highest % first; tiebreak by most total achievements (100% on 50 > 100% on 10)
+        bestCompletion = [...mapped].sort((a, b) => b.pct - a.pct || b.total - a.total)[0];
+        mostUnlocked   = [...mapped].sort((a, b) => b.unlocked - a.unlocked)[0];
       }
 
       const genreCount = {}, tagCount = {};
@@ -1865,15 +1869,15 @@ async function startWrapped(steamId) {
       return { bestCompletion, mostUnlocked, topGenre, topTag, withAch };
     }
 
-    // All-time stats
-    const allTimeStats = computeStatsForGames(allTimeTop5);
+    // All-time stats — use top 20 pool for best completion, top 5 for rarest/slides
+    const allTimeStats = computeStatsForGames(allTimeTop20);
     const { bestCompletion, mostUnlocked, topGenre, topTag, withAch } = allTimeStats;
     const achResults = allTimeTop5.map(g => achByAppId[g.appid]).filter(Boolean);
 
     // Per-year computed stats (excluding rarest — that stays all-time only)
     for (const year of years) {
       const ys = yearStats[year];
-      const ysStats = computeStatsForGames(ys.top5);
+      const ysStats = computeStatsForGames(ys.top20 || ys.top5);
       ys.bestCompletion = ysStats.bestCompletion;
       ys.mostUnlocked   = ysStats.mostUnlocked;
       ys.topGenre = ysStats.topGenre;
