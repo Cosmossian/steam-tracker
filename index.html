@@ -418,12 +418,12 @@
   .ws-top-val { font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--accent); flex-shrink: 0; }
 
   /* Scrollable summary */
-  #page-wrapped-summary { overflow-y: auto; padding: 72px 0 80px; }
+  #page-wrapped-summary { overflow-y: auto; padding: 20px 0 80px; }
   .wrapped-summary-inner { width: 820px; max-width: 95vw; }
-  .wrapped-summary-hero { text-align: center; margin-bottom: 48px; }
+  .wrapped-summary-hero { text-align: center; margin-bottom: 28px; padding-top: 16px; }
   .wrapped-summary-hero h1 { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; letter-spacing: 4px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
   .wrapped-summary-hero .wsh-sub { font-size: 14px; color: var(--muted); }
-  .wrapped-year-tabs { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center; }
+  .wrapped-year-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
   .wrapped-year-tab { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 6px 18px; border-radius: 20px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 1px; transition: all .15s; }
   .wrapped-year-tab:hover { border-color: var(--muted); color: var(--text); }
   .wrapped-year-tab.active { background: rgba(77,157,224,.1); border-color: var(--accent); color: var(--accent); }
@@ -747,7 +747,7 @@
 </div>
 
 <!-- STEAM WRAPPED: SLIDESHOW -->
-<div class="page hidden" id="page-wrapped-slides" onclick="nextWrappedSlide()" onkeydown="if(event.key==='ArrowRight'||event.key===' ')nextWrappedSlide()" tabindex="0">
+<div class="page hidden" id="page-wrapped-slides" tabindex="0">
   <div id="wrapped-slides-container"></div>
   <div class="ws-progress-dots" id="ws-dots"></div>
   <div class="ws-hint" id="ws-hint">TAP TO CONTINUE →</div>
@@ -895,12 +895,16 @@ function updateNav(pageId) {
 }
 
 function goHome() {
+  // Remove wrapped slide listeners so they can't fire after leaving
+  const slidePage = document.getElementById('page-wrapped-slides');
+  slidePage.removeEventListener('click', nextWrappedSlide);
+  slidePage.removeEventListener('keydown', wrappedKeyHandler);
   // Reset sub-mode panels
   document.getElementById('sub-single').classList.remove('open');
   document.getElementById('sub-group').classList.remove('open');
   document.getElementById('mc-single').classList.remove('active-mode');
   document.getElementById('mc-group').classList.remove('active-mode');
-  // Clear wrapped state so it doesn't bleed back
+  // Clear wrapped state
   wrappedData = null;
   wrappedSlides = [];
   wrappedSlideIndex = 0;
@@ -2017,12 +2021,24 @@ function showWrappedSlides() {
   dotsEl.innerHTML = wrappedSlides.map((_, i) => `<div class="ws-dot ${i===0?'active':''}" id="ws-dot-${i}"></div>`).join('');
   wrappedSlideIndex = 0;
   showPage('page-wrapped-slides');
-  document.getElementById('page-wrapped-slides').focus();
+
+  // Attach click + key listeners to the slide container only (not the whole page)
+  const slidePage = document.getElementById('page-wrapped-slides');
+  slidePage.removeEventListener('click', nextWrappedSlide);
+  slidePage.removeEventListener('keydown', wrappedKeyHandler);
+  slidePage.addEventListener('click', nextWrappedSlide);
+  slidePage.addEventListener('keydown', wrappedKeyHandler);
+  slidePage.focus();
+
   // Play first slide sound
   const slide = wrappedSlides[0];
   if (slide.sound === 'reveal') setTimeout(playReveal, 400);
   else if (slide.sound === 'drumroll') setTimeout(() => playDrumroll(), 200);
   else if (slide.sound === 'complete') setTimeout(playComplete, 300);
+}
+
+function wrappedKeyHandler(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') nextWrappedSlide();
 }
 
 function nextWrappedSlide() {
